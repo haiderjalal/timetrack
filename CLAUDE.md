@@ -62,6 +62,12 @@ All of `lint`, `format:check`, `typecheck`, `test`, `test:e2e` and `build` must 
   `@/components/ui/button-variants`, not `<Button asChild>` (that ships Radix Slot to the browser).
   The root `error.tsx` and `EmptyState` must not import `cn`: they ship with every page.
 - **Imports:** React/Next → third-party → `@/` aliases → relative → `import type` → styles.
+- **Auth:** read the user with `getCurrentUser()` / `requireUser()` from
+  `@/features/auth/services/currentUser` (verifies the JWT via `getClaims()`); never `getSession()`
+  on the server. `proxy.ts` only does optimistic routing, so every protected page, Server Action and
+  Route Handler calls `requireUser()` itself. Redirect targets from users go through
+  `getSafeRedirectPath()`. Session cookies stay `httpOnly`; don't add a browser Supabase client
+  that needs to read them.
 - **Members never send timestamps.** Clock times come from Postgres `now()` via RPC.
 - **Supabase:** `auto_expose_new_tables = false`, so every migration writes its own grants and RLS
   policies, and every policy gets a pgTAP test in `supabase/tests/`.

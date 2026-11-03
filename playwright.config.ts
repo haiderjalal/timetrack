@@ -1,4 +1,9 @@
+import { loadEnvConfig } from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
+
+// Same env files Next.js reads (.env.local etc.), so tests know whether
+// Supabase is configured. CI has no Supabase keys and skips those tests.
+loadEnvConfig(process.cwd());
 
 const PORT = 3000;
 const BASE_URL = `http://localhost:${PORT}`;
