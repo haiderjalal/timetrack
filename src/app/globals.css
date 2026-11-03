@@ -26,15 +26,23 @@
   --secondary: #f4f4f5;
   --secondary-foreground: #18181b;
   --muted: #f4f4f5;
-  --muted-foreground: #71717a;
+  /* AA (≥ 4.5:1) on white, canvas and muted surfaces alike. */
+  --muted-foreground: #6b6b74;
   --accent: #f4f4f5;
   --accent-foreground: #18181b;
   --border: #e4e4e7;
   --input: #d4d4d8;
   --brand: #4f46e5;
   --brand-foreground: #ffffff;
+  --brand-soft: #eef2ff;
   --ring: #4f46e5;
   --destructive: #e11d48;
+
+  /* The logo and brand surfaces (CTA band, sign-in panel) look the same in both themes. */
+  --brand-mark: #4f46e5;
+  --brand-mark-foreground: #ffffff;
+  /* 6.3:1 on --brand-mark (AA for body text; #c7d2fe was only 4.2:1). */
+  --brand-mark-muted: #e0e7ff;
 
   /* Attendance status: solid · soft background · text on soft */
   --status-present: #059669;
@@ -95,6 +103,7 @@
     --input: #3f3f46;
     --brand: #818cf8;
     --brand-foreground: #09090b;
+    --brand-soft: color-mix(in srgb, var(--brand) 15%, var(--background));
     --ring: #818cf8;
     --destructive: #fb7185;
 
@@ -175,6 +184,10 @@
   --color-input: var(--input);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-mark: var(--brand-mark);
+  --color-brand-mark-foreground: var(--brand-mark-foreground);
+  --color-brand-mark-muted: var(--brand-mark-muted);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
 
@@ -246,13 +259,222 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+/*
+ * Motion (docs/design-system.md §2.4). Every animation opts in under
+ * `prefers-reduced-motion: no-preference`; with reduced motion the content is
+ * simply shown in its final state. There is deliberately no global
+ * "animation-duration: 0.01ms" override: it can make some animations more jarring.
+ */
+html {
+  @media (prefers-reduced-motion: no-preference) {
+    scroll-behavior: smooth;
+  }
+}
+
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+/*
+ * Scroll reveals move content only, never fade it: a visitor who stops
+ * scrolling mid-reveal must still see text at full contrast.
+ */
+@keyframes reveal-up {
+  from {
+    translate: 0 32px;
+    scale: 0.98;
+  }
+}
+
+@keyframes draw-x {
+  from {
+    scale: 0 1;
+  }
+}
+
+@keyframes grow-x {
+  from {
+    scale: 0 1;
+  }
+}
+
+@keyframes live-ping {
+  to {
+    opacity: 0;
+    scale: 2.4;
+  }
+}
+
+/* One-off entrance on page load. Stagger with style={{ "--enter-delay": "120ms" }}. */
+@utility animate-enter {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: enter-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+}
+
+/*
+ * Lifts content into place as it scrolls into view. Decorative, so browsers without
+ * scroll-driven animations (Firefox today) just show the content.
+ * `animation-timeline` must come after the `animation` shorthand.
+ */
+@utility reveal {
+  @media (prefers-reduced-motion: no-preference) {
+    @supports ((animation-timeline: view()) and (animation-range: entry)) {
+      animation: reveal-up auto linear backwards;
+      animation-timeline: view();
+      animation-range: entry 10% entry 90%;
+    }
+  }
+}
+
+/* A connector line that draws itself as its section scrolls into view. */
+@utility reveal-line {
+  transform-origin: left center;
+  @media (prefers-reduced-motion: no-preference) {
+    @supports ((animation-timeline: view()) and (animation-range: entry)) {
+      animation: draw-x auto linear backwards;
+      animation-timeline: view();
+      animation-range: entry 20% cover 45%;
+    }
+  }
+}
+
+/* Bars that grow from the left whenever they're shown (e.g. a tab is opened). */
+@utility animate-grow-x {
+  transform-origin: left center;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: grow-x 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+}
+
+/* The "clocked in" dot: a soft ring pulses out of it. Static with reduced motion. */
+@utility live-dot {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    opacity: 0.6;
+    @media (prefers-reduced-motion: no-preference) {
+      animation: live-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+  }
+}
+
+/* A faint dot grid that fades out toward the edges, behind the hero. */
+@utility bg-dot-grid {
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--foreground) 14%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  mask-image: radial-gradient(
+    ellipse 70% 60% at 50% 40%,
+    #000 30%,
+    transparent 100%
+  );
+}
+
+/*
+ * Sticky site header: shows a shadow only once it's actually stuck. Scroll-state
+ * queries are progressive enhancement; elsewhere the header still sticks, just
+ * without the shadow. The query styles descendants, never the container itself.
+ */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  container-type: scroll-state;
+  container-name: site-header;
+}
+
+.site-header-bar {
+  transition: box-shadow 0.2s ease-out;
+}
+
+@container site-header scroll-state(stuck: top) {
+  .site-header-bar {
+    box-shadow: 0 6px 24px -12px rgb(0 0 0 / 0.25);
+  }
+}
+
+/*
+ * Progress ring on a semantic <progress> (the browser exposes value and max to
+ * screen readers). The fill is a conic-gradient driven by --ring-value (0–200:
+ * past 100 a second, overtime-colored lap starts). Set --ring-value inline:
+ * CSS attr() isn't available in Safari.
+ */
+@property --ring-value {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@keyframes ring-fill {
+  from {
+    --ring-value: 0;
+  }
+}
+
+.progress-ring {
+  --ring-thickness: 14px;
+  --ring-track: var(--muted);
+  --ring-fill: var(--status-present);
+  --ring-overtime: var(--status-overtime);
+  --ring-over: max(0, var(--ring-value) - 100);
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--ring-overtime) calc(var(--ring-over) * 1%),
+    var(--ring-fill) calc(var(--ring-over) * 1%)
+      calc(min(var(--ring-value), 100) * 1%),
+    var(--ring-track) 0
+  );
+  mask-image: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--ring-thickness)),
+    #000 calc(100% - var(--ring-thickness) + 0.5px)
+  );
+  transition: --ring-value 0s;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition-duration: 0.6s;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &::-webkit-progress-bar,
+  &::-webkit-progress-value {
+    background: transparent;
+  }
+  &::-moz-progress-bar {
+    background: transparent;
+  }
+}
+
+/* On brand surfaces (sign-in panel): white fill on a translucent white track. */
+.progress-ring-on-brand {
+  --ring-track: color-mix(
+    in srgb,
+    var(--brand-mark-foreground) 18%,
+    transparent
+  );
+  --ring-fill: var(--brand-mark-foreground);
+}
+
+/* Plays the fill from empty once on load (used on the sign-in brand panel). */
+.progress-ring-fill-on-load {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: ring-fill 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) 0.3s backwards;
   }
 }

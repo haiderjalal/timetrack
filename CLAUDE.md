@@ -60,7 +60,14 @@ All of `lint`, `format:check`, `typecheck`, `test`, `test:e2e` and `build` must 
   `TriangleAlert` not `AlertTriangle`).
 - **Links that look like buttons** use `<Link className={buttonVariants(...)}>` from
   `@/components/ui/button-variants`, not `<Button asChild>` (that ships Radix Slot to the browser).
-  The root `error.tsx` and `EmptyState` must not import `cn`: they ship with every page.
+  Code that runs in the browser on public pages (root `error.tsx`, `EmptyState`, `ProgressRing`,
+  `TabSwitcher`, `ClockDemo`, `StatusBadge`, `LogoMark`) must not import `cn` (~10 KB): join
+  non-conflicting classes by hand, and never pass a `className` to `buttonVariants` that fights
+  its own classes (e.g. `hidden` vs `inline-flex`): wrap the element instead.
+- **Motion:** every animation opts in under `prefers-reduced-motion: no-preference` (or
+  `motion-safe:`); never add a global "animation-duration: 0.01ms" override. Use the utilities in
+  `globals.css` (`animate-enter`, `reveal`, `reveal-line`, `animate-grow-x`, `live-dot`). Never
+  animate the hero `<h1>` (the LCP element), and scroll reveals move content without fading it.
 - **Imports:** React/Next → third-party → `@/` aliases → relative → `import type` → styles.
 - **Auth:** read the user with `getCurrentUser()` / `requireUser()` from
   `@/features/auth/services/currentUser` (verifies the JWT via `getClaims()`); never `getSession()`

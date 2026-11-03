@@ -35,6 +35,8 @@ test.describe("sign-in page", () => {
   });
 
   test("has no accessibility violations", async ({ page }) => {
+    // Settled page: the brand panel's ring fill shouldn't be mid-animation.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/login?error=callback");
     await expect(pageAlert(page)).toBeVisible();
 
