@@ -183,6 +183,24 @@ Primary journey for an owner: **Attendance** (morning check) → **Approvals** �
 └─────────────────────────────┘
 ```
 
+### As built (Phase 1)
+
+- `src/app/o/[orgSlug]/layout.tsx` + `src/features/app-shell`. The frame (sidebar column, top bar,
+  main) is static; the org switcher, nav, date and user menu stream in behind Suspense with
+  skeletons of the same size.
+- **Org switcher** sits at the top of the sidebar (desktop, as on the design canvas) and in the top
+  bar on phones. It's a dropdown menu listing your orgs with your role, plus **Create
+  organization**. A command-palette search can replace it once people belong to many orgs.
+- **User menu** (avatar, top bar right, every size): name and email, **Account**, **Sign out**.
+- **Page title** is the top bar's `<h1>` (visually hidden on phones), taken from the nav config.
+- **Nav config** (`src/features/app-shell/constants/navigation.ts`) lists only pages that exist.
+  Today that's Dashboard, so the Manage group is empty and hidden. It appears for owners and admins
+  once a Manage page ships.
+- **Bottom tabs** show the "Me" pages and render only when there are at least two (a bar with one
+  tab is noise). They appear with Timesheet in Phase 3; the Manage sheet comes with the first Manage
+  page.
+- The tablet rail keeps labels for screen readers (`sr-only`) and shows them as tooltips (`title`).
+
 ---
 
 ## 6. Key screens
@@ -250,11 +268,19 @@ Sticky member column, sortable numeric columns, row → `/team/[member]` month c
 - **Member:** balances per leave type at the top, then a list of requests with StatusBadge (pending / approved / rejected / cancelled), and a **"Request leave"** button that opens the LeaveRequestSheet.
 - **Admin, Approvals:** a list of ApprovalCards showing who else is off on those dates. One-click approve; reject asks for an optional note.
 
-### 6.5 Onboarding (3 short steps)
+### 6.5 Onboarding
 
-1. **Organization**: name, URL slug (auto-filled), timezone (detected).
-2. **Working hours**: ScheduleEditor pre-filled with Mon–Fri 09:00–18:00, 8h.
-3. **Invite your team**: paste emails, choose a role. Can be skipped.
+Built as one page with two cards (Phase 1); the invite step arrives with invitations (Phase 2).
+
+1. **Your organization**: name, web address (slug suggested from the name until edited; phones
+   show `/o/` only before it), timezone (detected from the browser, editable, native select).
+2. **Working hours**: ScheduleEditor pre-filled with the confirmed defaults (Mon–Fri 09:00–18:00,
+   8h, 15 min grace). On phones each day shows Start and End side by side with hours below, so a
+   12-hour `06:00 PM` still fits; from 768 px each day is one row.
+3. _(Phase 2)_ **Invite your team**: paste emails, choose a role. Can be skipped.
+
+Errors appear under each field (`aria-invalid` + `aria-describedby`), focus moves to the first
+one, and server problems that aren't about a field show in an alert above the button.
 
 ---
 

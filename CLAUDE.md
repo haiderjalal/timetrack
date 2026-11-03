@@ -75,8 +75,18 @@ All of `lint`, `format:check`, `typecheck`, `test`, `test:e2e` and `build` must 
   Route Handler calls `requireUser()` itself. Redirect targets from users go through
   `getSafeRedirectPath()`. Session cookies stay `httpOnly`; don't add a browser Supabase client
   that needs to read them.
+- **Org pages:** every page, layout part, Server Action and Route Handler under `/o/[orgSlug]` calls
+  `requireMembership(orgSlug)` from `@/features/organizations/services/membership` (verified user +
+  active membership, else 404). It's cached per request, so calling it again is free. Only link to
+  pages that exist: add a page to `src/features/app-shell/constants/navigation.ts` when it ships.
+- **Typed routes** (`typedRoutes: true`): links and `redirect()` are checked against real routes.
+  Build org URLs with `orgDashboardPath()` from `@/constants/routes` instead of string templates.
+- **Forms:** React Hook Form + Zod. Schemas live in `src/lib/validations` and the Server Action
+  parses the same schema again. Server-side failures come back as `ApiFailure` with field paths.
 - **Members never send timestamps.** Clock times come from Postgres `now()` via RPC.
-- **Supabase:** `auto_expose_new_tables = false`, so every migration writes its own grants and RLS
-  policies, and every policy gets a pgTAP test in `supabase/tests/`.
+- **Supabase:** `auto_expose_new_tables = false`, so every migration revokes and then writes its
+  own grants and RLS policies, and every policy gets a pgTAP test in `supabase/tests/database/`.
+  After a migration, regenerate `src/types/database.types.ts`. Repositories select named columns
+  (never `*`) and turn Postgres errors into `DataAccessError` / friendly messages.
 - **Git:** `main` is protected; work on `feature/*`, `fix/*`, `chore/*` branches with Conventional
   Commits, and merge through squash-merged PRs.

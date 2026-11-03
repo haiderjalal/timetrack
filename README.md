@@ -4,8 +4,9 @@ Attendance and time tracking for teams. Members sign in with Google and clock in
 TimeTrack records the hours worked against the organization's working hours, counts overtime, and
 handles leave requests. Owners get a monthly report for every member.
 
-> **Status:** Phase 0 (foundation) of the [roadmap](docs/roadmap.md). Sign-in and the app itself
-> arrive in Phase 1.
+> **Status:** Phase 1 of the [roadmap](docs/roadmap.md): Google sign-in, onboarding (create an
+> organization with its working hours), the app shell and the dashboard. Clocking in and out
+> arrives in Phase 3.
 
 ## Tech stack
 
@@ -43,6 +44,22 @@ Open http://localhost:3000.
 4. In Google Cloud, the OAuth client's redirect URI is
    `https://<project-ref>.supabase.co/auth/v1/callback`.
 
+### Apply the database
+
+The schema lives in `supabase/migrations` (design: [docs/database.md](docs/database.md)). The
+project ref is the subdomain of `NEXT_PUBLIC_SUPABASE_URL`. `link` asks for the database password:
+type it in your terminal only.
+
+```bash
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+npx supabase gen types typescript --linked > src/types/database.types.ts
+```
+
+Row Level Security is covered by pgTAP tests in `supabase/tests/database`. Run them against the
+local database with `npm run db:start` then `npx supabase test db` (Docker required).
+
 ## Scripts
 
 | Script                                    | What it does                                        |
@@ -63,7 +80,7 @@ First-time e2e setup: `npx playwright install chromium`.
 ```
 docs/          architecture, database, business rules, design system, roadmap
 e2e/           Playwright specs
-supabase/      config, migrations and pgTAP tests (from Phase 1)
+supabase/      config, migrations and pgTAP tests (supabase/tests/database)
 src/
   app/         routes only (pages, layouts, route handlers)
   features/    feature modules: components, services, repositories, validation

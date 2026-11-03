@@ -1,11 +1,13 @@
 # TimeTrack: Business Rules
 
-> Status: **Draft v0.1.** Items marked **[ASSUMPTION]** are proposed defaults that need product-owner confirmation (see §10).
+> Status: **Draft v0.2.** Items marked **[ASSUMPTION]** are proposed defaults that need product-owner confirmation (see §10). Marked **[CONFIRMED]**: confirmed by the product owner on 2026-11-03 (§1 roles, §8 default working hours, Q8, Q10).
 > These rules are implemented in pure TypeScript (`features/attendance/services/attendance-calculator.ts`) and covered by unit tests. Postgres only enforces the hard invariants listed in [database.md](database.md).
 
 ---
 
 ## 1. Roles and permissions
+
+**[CONFIRMED]** as written below.
 
 | Capability                                              | Owner |        Admin         | Member |
 | ------------------------------------------------------- | :---: | :------------------: | :----: |
@@ -20,19 +22,19 @@
 | Promote/demote admins, transfer ownership, delete org   |  ✅   |          –           |   –    |
 
 - An org always has **at least one active owner** (enforced in the database).
-- A person can belong to **several orgs**, each with its own role. **[ASSUMPTION]**
+- A person can belong to **several orgs**, each with its own role. **[CONFIRMED]**
 - Removing someone **deactivates** them: their history stays in reports, and they lose access immediately.
 
 ## 2. Key terms
 
-| Term              | Definition                                                                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Org timezone**  | IANA zone set on the org (e.g. `Asia/Karachi`). All dates, schedules and reports use it. **[ASSUMPTION]** members don't have personal timezones in v1. |
-| **Session**       | One clock-in → clock-out pair (`time_entries` row).                                                                                                    |
-| **Work date**     | The org-local calendar date of the session's **clock-in**. A night shift from 22:00 to 06:00 counts entirely toward the day it started.                |
-| **Scheduled day** | The weekday rule from the schedule version in effect on that date: working or not, start/end time, required minutes.                                   |
-| **Required time** | `required_minutes` of the scheduled day (default **480 min = 8h**), adjusted for leave (§5).                                                           |
-| **Worked time**   | Sum of all closed sessions on that work date. Breaks are simply the gaps between sessions.                                                             |
+| Term              | Definition                                                                                                                                            |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Org timezone**  | IANA zone set on the org (e.g. `Asia/Karachi`). All dates, schedules and reports use it. **[CONFIRMED]** members don't have personal timezones in v1. |
+| **Session**       | One clock-in → clock-out pair (`time_entries` row).                                                                                                   |
+| **Work date**     | The org-local calendar date of the session's **clock-in**. A night shift from 22:00 to 06:00 counts entirely toward the day it started.               |
+| **Scheduled day** | The weekday rule from the schedule version in effect on that date: working or not, start/end time, required minutes.                                  |
+| **Required time** | `required_minutes` of the scheduled day (default **480 min = 8h**), adjusted for leave (§5).                                                          |
+| **Worked time**   | Sum of all closed sessions on that work date. Breaks are simply the gaps between sessions.                                                            |
 
 ## 3. Clock in / clock out
 
@@ -119,7 +121,7 @@ A `pg_cron` job runs every 15 minutes and auto-closes stale sessions. **[ASSUMPT
 ## 8. Working hours (schedules)
 
 1. Set per weekday: working or not, start time, end time, required hours (default 8h), plus an org-wide grace period (default 15 min).
-2. Default for new orgs: **Mon–Fri 09:00–18:00, 8h required, 15 min grace**, Sat/Sun off. **[ASSUMPTION]**
+2. Default for new orgs: **Mon–Fri 09:00–18:00, 8h required, 15 min grace**, Sat/Sun off. **[CONFIRMED]** The creator can change every day during onboarding.
 3. Changing hours creates a **new version effective from a chosen date** (default: today). Past days keep the rules that applied then, so reports from earlier months don't change.
 4. Shifts crossing midnight are allowed (end time earlier than start time).
 5. Holidays are managed as a dated list per org.
@@ -159,8 +161,8 @@ For a selected month (org timezone), one row per active member (plus members dea
 | Q5  | Leave quotas: enforce, warn, or ignore?                            | **Warn only** in v1                                            |
 | Q6  | Forgotten clock-out: auto-close rule above OK?                     | **Yes**, shift end + 4h                                        |
 | Q7  | Can members edit their own entries?                                | **No**, admins only, with a reason                             |
-| Q8  | One timezone per org, or per member?                               | **Per org**                                                    |
+| Q8  | One timezone per org, or per member?                               | **Per org** ✅ confirmed 2026-11-03                            |
 | Q9  | Should clock-in be restricted by location / IP / Wi-Fi?            | **No** in v1 (planned later)                                   |
-| Q10 | Can a person belong to several orgs?                               | **Yes**                                                        |
+| Q10 | Can a person belong to several orgs?                               | **Yes** ✅ confirmed 2026-11-03                                |
 | Q11 | Do members see teammates' attendance, or only their own?           | **Only their own**; they see teammates' names and avatars only |
 | Q12 | Billing / paid plans in v1?                                        | **No**, free while building                                    |

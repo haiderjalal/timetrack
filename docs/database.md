@@ -1,7 +1,7 @@
 # TimeTrack: Database Design
 
-> Status: **Draft v0.1, awaiting approval** · Engine: Supabase Postgres · Date: 2026-11-03
-> This is the design spec. The real schema will be created through ordered migrations in `supabase/migrations/`.
+> Status: **v0.2** · Engine: Supabase Postgres · Date: 2026-11-03
+> This is the design spec. Phase 1 tables are built (see [§10](#10-implementation-status)); the rest arrive with their roadmap phase, through ordered migrations in `supabase/migrations/`.
 
 ---
 
@@ -309,7 +309,7 @@ Policies use `org_id in (select private.member_org_ids())`. Postgres runs the su
 
 | Table                                  | SELECT                         | INSERT                                          | UPDATE                                        | DELETE                           |
 | -------------------------------------- | ------------------------------ | ----------------------------------------------- | --------------------------------------------- | -------------------------------- |
-| `profiles`                             | self + people who share an org | trigger only                                    | self (name only)                              | –                                |
+| `profiles`                             | self + people who share an org | trigger only                                    | self (`full_name`, `last_org_id`)             | –                                |
 | `organizations`                        | member orgs                    | RPC `create_organization`                       | admin orgs                                    | – (soft delete by owner via RPC) |
 | `organization_members`                 | member orgs                    | RPC `accept_invitation` / `create_organization` | RPC `change_member_role`, `deactivate_member` | –                                |
 | `invitations`                          | admin orgs                     | admin orgs                                      | admin orgs (revoke)                           | –                                |
@@ -448,3 +448,46 @@ This uses `time_entries_org_date`. Because it is `security invoker`, a member ca
 - Lists use **keyset pagination** (`(work_date, id) < (…)`), not `OFFSET`.
 - Monthly reports read one org-month **range** through the composite index, then aggregate in SQL. No N+1 queries: members, totals, leave and holidays load in four parallel queries.
 - `pg_stat_statements` is reviewed before each release; `EXPLAIN ANALYZE` is attached to any PR that adds a query on `time_entries`.
+
+## 10. Implementation status
+
+### Built in Phase 1 (`feature/onboarding`)
+
+| Migration (`supabase/migrations/`)             | Contents                                                                                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `20261103120000_foundation.sql`                | `citext`, `btree_gist`, the `private` schema, `member_role` / `member_status`, `private.set_updated_at()`                                         |
+| `20261103120100_profiles.sql`                  | `profiles`, `private.handle_new_user` on `auth.users`, a backfill for people who signed in earlier                                                |
+| `20261103120200_organizations.sql`             | `organizations`, `organization_members`, `ensure_owner_remains`, `validate_timezone`, `member_org_ids()` / `admin_org_ids()`, membership policies |
+| `20261103120300_schedules_and_leave_types.sql` | `work_schedules`, `work_schedule_days`, `leave_types` and their policies                                                                          |
+| `20261103120400_create_organization.sql`       | `create_organization(p_name, p_slug, p_timezone, p_schedule)`                                                                                     |
+
+pgTAP tests live in `supabase/tests/database/` (69 assertions): default-deny grants, the profile
+trigger, `create_organization`, and tenant isolation by role (org A sees nothing of org B, members
+can't write admin data, the last owner stays, deactivated members lose access). Run them with
+`npx supabase test db` (needs Docker). Types for the app are in `src/types/database.types.ts`;
+regenerate them after every migration with
+`npx supabase gen types typescript --linked > src/types/database.types.ts`.
+
+### Decisions made while building
+
+- **Enum types are created with the table that uses them.** `entry_source`, `leave_status` and
+  `leave_duration` arrive with `time_entries` and `leave_requests`.
+- **`profiles.last_org_id` has a foreign key** to `organizations` (`on delete set null`) and an
+  index. Users may update it (column grant), but only to an org they're an active member of.
+- **Grants are explicit both ways.** Every migration first revokes `anon` / `authenticated` and then
+  grants exact privileges, column by column for updates (for example `organizations`: `name`,
+  `slug`, `timezone`, `week_starts_on`). `service_role` gets table privileges for maintenance code.
+  This holds whether or not a hosted project has `auto_expose_new_tables` turned off.
+- **`slug` is checked as `slug::text`.** On `citext`, `~` ignores case, which would let `Acme` past
+  the lowercase-only pattern. Uniqueness still ignores case.
+- **A day off stores no times and `required_minutes = 0`.**
+- **`leave_types.color_token`** is checked to look like a token name (`^[a-z][a-z-]{0,39}$`) so a raw
+  hex value can't be stored.
+- **`created_by` columns are indexed**, so every foreign key is.
+- **`ensure_owner_remains`** lets a whole org be deleted (its cascade) but blocks deleting the auth
+  user who is an org's last owner: ownership has to move first.
+- **`create_organization` errors** are short codes the app maps to friendly messages:
+  `not_authenticated` (42501), `invalid_schedule` / `invalid_input` / `invalid_timezone` (22023) and
+  `slug_taken` (P0001). Postgres wording never reaches the browser.
+- **Profiles and their email** come from Google at sign-up. Later Google profile changes don't sync
+  yet.
