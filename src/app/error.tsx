@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { TriangleAlert } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { ROUTES } from "@/constants/routes";
 
 interface ErrorPageProps {
@@ -13,6 +13,8 @@ interface ErrorPageProps {
   retry: () => void;
 }
 
+// The root error boundary loads with every page, so it uses buttonVariants
+// directly instead of <Button> to keep `cn` and Radix Slot out of the bundle.
 export default function ErrorPage({ error, retry }: ErrorPageProps) {
   useEffect(() => {
     // Replaced by Sentry reporting in the hardening phase.
@@ -27,10 +29,19 @@ export default function ErrorPage({ error, retry }: ErrorPageProps) {
         title="Something went wrong"
         description="We couldn't load this page. Try again, and if it keeps happening, let your organization's admin know."
       >
-        <Button onClick={() => retry()}>Try again</Button>
-        <Button asChild variant="outline">
-          <Link href={ROUTES.home}>Back to home</Link>
-        </Button>
+        <button
+          type="button"
+          className={buttonVariants()}
+          onClick={() => retry()}
+        >
+          Try again
+        </button>
+        <Link
+          href={ROUTES.home}
+          className={buttonVariants({ variant: "outline" })}
+        >
+          Back to home
+        </Link>
       </EmptyState>
     </main>
   );

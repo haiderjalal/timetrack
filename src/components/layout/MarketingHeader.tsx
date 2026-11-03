@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/shared/Logo";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { ROUTES } from "@/constants/routes";
 
 export function MarketingHeader() {
@@ -15,9 +15,12 @@ export function MarketingHeader() {
         >
           <Logo />
         </Link>
-        <Button asChild variant="ghost">
-          <Link href={ROUTES.login}>Sign in</Link>
-        </Button>
+        <Link
+          href={ROUTES.login}
+          className={buttonVariants({ variant: "ghost" })}
+        >
+          Sign in
+        </Link>
       </div>
     </header>
   );

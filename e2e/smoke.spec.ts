@@ -24,6 +24,17 @@ test.describe("landing page", () => {
     expect(results.violations).toEqual([]);
   });
 
+  test("has no accessibility violations in dark mode", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.goto("/");
+
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze();
+
+    expect(results.violations).toEqual([]);
+  });
+
   test("fits the screen without sideways scrolling", async ({ page }) => {
     await page.goto("/");
 

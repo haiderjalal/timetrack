@@ -245,6 +245,8 @@ Every 15 minutes, `pg_cron` closes entries that are still open long after the sh
 - **Tenant data is never cached across users.** It is read with each user's JWT under RLS, so a shared cache could leak data between users. React `cache()` deduplicates within one request (for example, `requireMembership()` called from layout and page).
 - **Mutations**: Server Actions call `revalidatePath` for the affected org routes and return the new state for optimistic UI.
 - **Client JavaScript is limited to islands**: clock button, live timer, live board, forms, report table. Everything else is a Server Component.
+- **Keep helpers out of the shared client bundle.** The root `error.tsx` loads with every page, so it uses `buttonVariants` rather than `<Button>`, and links styled as buttons use `buttonVariants` rather than `<Button asChild>` (which ships Radix Slot). This keeps `cn` and Slot off pages that don't need them. Measured: landing page JS dropped from 165 KB to 144 KB gzipped. The rest is the Next.js/React runtime.
+- **`experimental.inlineCss` was considered and rejected.** It speeds up a first visit, but members return twice a day and benefit more from a cached stylesheet. It is also global-only and experimental.
 - **Fonts and images**: `next/font` (self-hosted Inter); avatars through `next/image` with Google's avatar domain allow-listed.
 
 ---

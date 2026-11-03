@@ -58,6 +58,9 @@ All of `lint`, `format:check`, `typecheck`, `test`, `test:e2e` and `build` must 
   label or icon, never color alone. Times and durations use the `tabular` utility.
 - **Icons:** Lucide 1.x. Old aliases are gone (`TreePalm` not `Palmtree`, `House` not `Home`,
   `TriangleAlert` not `AlertTriangle`).
+- **Links that look like buttons** use `<Link className={buttonVariants(...)}>` from
+  `@/components/ui/button-variants`, not `<Button asChild>` (that ships Radix Slot to the browser).
+  The root `error.tsx` and `EmptyState` must not import `cn`: they ship with every page.
 - **Imports:** React/Next → third-party → `@/` aliases → relative → `import type` → styles.
 - **Members never send timestamps.** Clock times come from Postgres `now()` via RPC.
 - **Supabase:** `auto_expose_new_tables = false`, so every migration writes its own grants and RLS

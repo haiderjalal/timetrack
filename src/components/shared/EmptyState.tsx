@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -11,24 +9,19 @@ interface EmptyStateProps {
   titleAs?: "h1" | "h2";
   /** Primary and secondary actions, e.g. buttons or links. */
   children?: ReactNode;
-  className?: string;
 }
 
+// Rendered by the root error boundary too, so it stays free of client-heavy
+// helpers like `cn`: every import here ships with every page.
 export function EmptyState({
   icon: Icon,
   title,
   description,
   titleAs: Title = "h2",
   children,
-  className,
 }: EmptyStateProps) {
   return (
-    <div
-      className={cn(
-        "flex flex-col items-center gap-4 px-4 py-12 text-center",
-        className,
-      )}
-    >
+    <div className="flex flex-col items-center gap-4 px-4 py-12 text-center">
       <span
         aria-hidden="true"
         className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground"
