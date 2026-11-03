@@ -9,6 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string;
+          actor_id: string | null;
+          after: Json | null;
+          before: Json | null;
+          created_at: string;
+          entity_id: string | null;
+          entity_type: string;
+          id: number;
+          org_id: string;
+          reason: string | null;
+        };
+        Insert: {
+          action: string;
+          actor_id?: string | null;
+          after?: Json | null;
+          before?: Json | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type: string;
+          id?: never;
+          org_id: string;
+          reason?: string | null;
+        };
+        Update: {
+          action?: string;
+          actor_id?: string | null;
+          after?: Json | null;
+          before?: Json | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string;
+          id?: never;
+          org_id?: string;
+          reason?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "audit_log_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       leave_types: {
         Row: {
           color_token: string;
@@ -189,6 +243,59 @@ export type Database = {
           },
         ];
       };
+      time_entries: {
+        Row: {
+          auto_closed: boolean;
+          clock_in_at: string;
+          clock_in_source: Database["public"]["Enums"]["entry_source"];
+          clock_out_at: string | null;
+          clock_out_source: Database["public"]["Enums"]["entry_source"] | null;
+          created_at: string;
+          id: string;
+          note: string | null;
+          org_id: string;
+          updated_at: string;
+          user_id: string;
+          work_date: string;
+        };
+        Insert: {
+          auto_closed?: boolean;
+          clock_in_at?: string;
+          clock_in_source?: Database["public"]["Enums"]["entry_source"];
+          clock_out_at?: string | null;
+          clock_out_source?: Database["public"]["Enums"]["entry_source"] | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          org_id: string;
+          updated_at?: string;
+          user_id: string;
+          work_date: string;
+        };
+        Update: {
+          auto_closed?: boolean;
+          clock_in_at?: string;
+          clock_in_source?: Database["public"]["Enums"]["entry_source"];
+          clock_out_at?: string | null;
+          clock_out_source?: Database["public"]["Enums"]["entry_source"] | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          org_id?: string;
+          updated_at?: string;
+          user_id?: string;
+          work_date?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_org_id_user_id_fkey";
+            columns: ["org_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "organization_members";
+            referencedColumns: ["org_id", "user_id"];
+          },
+        ];
+      };
       work_schedule_days: {
         Row: {
           end_time: string | null;
@@ -271,6 +378,47 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      clock_in: {
+        Args: {
+          p_org_id: string;
+          p_source?: Database["public"]["Enums"]["entry_source"];
+        };
+        Returns: {
+          auto_closed: boolean;
+          clock_in_at: string;
+          clock_in_source: Database["public"]["Enums"]["entry_source"];
+          clock_out_at: string | null;
+          clock_out_source: Database["public"]["Enums"]["entry_source"] | null;
+          created_at: string;
+          id: string;
+          note: string | null;
+          org_id: string;
+          updated_at: string;
+          user_id: string;
+          work_date: string;
+        };
+      };
+      clock_out: {
+        Args: {
+          p_note?: string;
+          p_org_id: string;
+          p_source?: Database["public"]["Enums"]["entry_source"];
+        };
+        Returns: {
+          auto_closed: boolean;
+          clock_in_at: string;
+          clock_in_source: Database["public"]["Enums"]["entry_source"];
+          clock_out_at: string | null;
+          clock_out_source: Database["public"]["Enums"]["entry_source"] | null;
+          created_at: string;
+          id: string;
+          note: string | null;
+          org_id: string;
+          updated_at: string;
+          user_id: string;
+          work_date: string;
+        };
+      };
       create_organization: {
         Args: {
           p_name: string;
@@ -292,6 +440,7 @@ export type Database = {
       };
     };
     Enums: {
+      entry_source: "web" | "mobile" | "admin" | "system";
       member_role: "owner" | "admin" | "member";
       member_status: "active" | "deactivated";
     };
@@ -318,6 +467,7 @@ export type Enums<EnumName extends keyof DefaultSchema["Enums"]> =
 export const Constants = {
   public: {
     Enums: {
+      entry_source: ["web", "mobile", "admin", "system"],
       member_role: ["owner", "admin", "member"],
       member_status: ["active", "deactivated"],
     },
