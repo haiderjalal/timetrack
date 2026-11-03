@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FileQuestionMark } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { ROUTES } from "@/constants/routes";
 
 import type { Metadata } from "next";
@@ -21,9 +21,9 @@ export default function NotFound() {
         title="Page not found"
         description="This page doesn't exist or has moved. Check the address, or head back to the start."
       >
-        <Button asChild>
-          <Link href={ROUTES.home}>Back to home</Link>
-        </Button>
+        <Link href={ROUTES.home} className={buttonVariants()}>
+          Back to home
+        </Link>
       </EmptyState>
     </main>
   );

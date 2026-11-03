@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { ROUTES } from "@/constants/routes";
 
 import { ClockPreview } from "./ClockPreview";
@@ -21,15 +21,16 @@ export function HeroSection() {
           organization, then turns them into a monthly report you can trust.
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <Button asChild size="lg">
-            <Link href={ROUTES.login}>
-              Get started with Google
-              <ArrowRight data-icon="inline-end" aria-hidden="true" />
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="ghost">
-            <a href="#how-it-works">How it works</a>
-          </Button>
+          <Link href={ROUTES.login} className={buttonVariants({ size: "lg" })}>
+            Get started with Google
+            <ArrowRight data-icon="inline-end" aria-hidden="true" />
+          </Link>
+          <a
+            href="#how-it-works"
+            className={buttonVariants({ size: "lg", variant: "ghost" })}
+          >
+            How it works
+          </a>
         </div>
       </div>
       <ClockPreview />
