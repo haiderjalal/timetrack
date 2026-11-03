@@ -14,6 +14,21 @@ test.describe("landing page", () => {
     ).toHaveAttribute("href", "/login");
   });
 
+  test("loads without console errors, prefetches included", async ({
+    page,
+  }) => {
+    const errors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") errors.push(message.text());
+    });
+
+    await page.goto("/");
+    // Link prefetches (e.g. /login) happen after load; a 404 would log here.
+    await page.waitForLoadState("networkidle");
+
+    expect(errors).toEqual([]);
+  });
+
   test("has no accessibility violations", async ({ page }) => {
     await page.goto("/");
 
