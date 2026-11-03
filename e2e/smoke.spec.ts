@@ -9,9 +9,12 @@ test.describe("landing page", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "Clock in with one tap",
     );
-    await expect(
-      page.getByRole("link", { name: /get started with google/i }),
-    ).toHaveAttribute("href", "/login");
+    // The hero and the closing call-to-action band both lead to sign-in.
+    const ctas = page.getByRole("link", { name: /get started with google/i });
+    await expect(ctas).toHaveCount(2);
+    for (const cta of await ctas.all()) {
+      await expect(cta).toHaveAttribute("href", "/login");
+    }
   });
 
   test("loads without console errors, prefetches included", async ({
@@ -29,7 +32,10 @@ test.describe("landing page", () => {
     expect(errors).toEqual([]);
   });
 
+  // Audit the settled page: with reduced motion nothing is mid-fade, so axe
+  // measures real colors (e2e/landing.spec.ts checks the motion itself).
   test("has no accessibility violations", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
 
     const results = await new AxeBuilder({ page })
@@ -40,7 +46,7 @@ test.describe("landing page", () => {
   });
 
   test("has no accessibility violations in dark mode", async ({ page }) => {
-    await page.emulateMedia({ colorScheme: "dark" });
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
     await page.goto("/");
 
     const results = await new AxeBuilder({ page })
