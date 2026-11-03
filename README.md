@@ -32,6 +32,17 @@ npm run dev
 
 Open http://localhost:3000.
 
+### Connect Supabase (sign-in)
+
+1. Put your project's URL, publishable key and secret key in **`.env.local`** (git-ignored).
+   Never put them in `.env.example`: it is committed, and a test fails CI if it holds real keys.
+2. In Supabase, open **Authentication → Sign In / Providers** and enable **Google** with your
+   Google OAuth client. Turn **Email** off: TimeTrack signs in with Google only.
+3. In **Authentication → URL Configuration**, set the Site URL and add
+   `http://localhost:3000/auth/callback` (plus each deployed URL's `/auth/callback`) to Redirect URLs.
+4. In Google Cloud, the OAuth client's redirect URI is
+   `https://<project-ref>.supabase.co/auth/v1/callback`.
+
 ## Scripts
 
 | Script                                    | What it does                                        |
