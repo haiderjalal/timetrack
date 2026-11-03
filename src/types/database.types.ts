@@ -1,0 +1,325 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export type Database = {
+  public: {
+    Tables: {
+      leave_types: {
+        Row: {
+          color_token: string;
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          is_paid: boolean;
+          name: string;
+          org_id: string;
+          updated_at: string;
+          yearly_quota_days: number | null;
+        };
+        Insert: {
+          color_token?: string;
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          is_paid?: boolean;
+          name: string;
+          org_id: string;
+          updated_at?: string;
+          yearly_quota_days?: number | null;
+        };
+        Update: {
+          color_token?: string;
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          is_paid?: boolean;
+          name?: string;
+          org_id?: string;
+          updated_at?: string;
+          yearly_quota_days?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "leave_types_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      organization_members: {
+        Row: {
+          created_at: string;
+          id: string;
+          job_title: string | null;
+          joined_at: string;
+          org_id: string;
+          role: Database["public"]["Enums"]["member_role"];
+          schedule_id: string | null;
+          status: Database["public"]["Enums"]["member_status"];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          job_title?: string | null;
+          joined_at?: string;
+          org_id: string;
+          role?: Database["public"]["Enums"]["member_role"];
+          schedule_id?: string | null;
+          status?: Database["public"]["Enums"]["member_status"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          job_title?: string | null;
+          joined_at?: string;
+          org_id?: string;
+          role?: Database["public"]["Enums"]["member_role"];
+          schedule_id?: string | null;
+          status?: Database["public"]["Enums"]["member_status"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "organization_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      organizations: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          id: string;
+          name: string;
+          slug: string;
+          timezone: string;
+          updated_at: string;
+          week_starts_on: number;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          deleted_at?: string | null;
+          id?: string;
+          name: string;
+          slug: string;
+          timezone: string;
+          updated_at?: string;
+          week_starts_on?: number;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          deleted_at?: string | null;
+          id?: string;
+          name?: string;
+          slug?: string;
+          timezone?: string;
+          updated_at?: string;
+          week_starts_on?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "organizations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      profiles: {
+        Row: {
+          avatar_url: string | null;
+          created_at: string;
+          email: string;
+          full_name: string | null;
+          id: string;
+          last_org_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          created_at?: string;
+          email: string;
+          full_name?: string | null;
+          id: string;
+          last_org_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          avatar_url?: string | null;
+          created_at?: string;
+          email?: string;
+          full_name?: string | null;
+          id?: string;
+          last_org_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profiles_last_org_id_fkey";
+            columns: ["last_org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      work_schedule_days: {
+        Row: {
+          end_time: string | null;
+          is_working_day: boolean;
+          required_minutes: number;
+          schedule_id: string;
+          start_time: string | null;
+          weekday: number;
+        };
+        Insert: {
+          end_time?: string | null;
+          is_working_day: boolean;
+          required_minutes?: number;
+          schedule_id: string;
+          start_time?: string | null;
+          weekday: number;
+        };
+        Update: {
+          end_time?: string | null;
+          is_working_day?: boolean;
+          required_minutes?: number;
+          schedule_id?: string;
+          start_time?: string | null;
+          weekday?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "work_schedule_days_schedule_id_fkey";
+            columns: ["schedule_id"];
+            isOneToOne: false;
+            referencedRelation: "work_schedules";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      work_schedules: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          effective_from: string;
+          grace_minutes: number;
+          id: string;
+          org_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          effective_from: string;
+          grace_minutes?: number;
+          id?: string;
+          org_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          effective_from?: string;
+          grace_minutes?: number;
+          id?: string;
+          org_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "work_schedules_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "work_schedules_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      create_organization: {
+        Args: {
+          p_name: string;
+          p_schedule: Json;
+          p_slug: string;
+          p_timezone: string;
+        };
+        Returns: {
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          id: string;
+          name: string;
+          slug: string;
+          timezone: string;
+          updated_at: string;
+          week_starts_on: number;
+        };
+      };
+    };
+    Enums: {
+      member_role: "owner" | "admin" | "member";
+      member_status: "active" | "deactivated";
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+};
+
+type DefaultSchema = Database["public"];
+
+export type Tables<TableName extends keyof DefaultSchema["Tables"]> =
+  DefaultSchema["Tables"][TableName]["Row"];
+
+export type TablesInsert<TableName extends keyof DefaultSchema["Tables"]> =
+  DefaultSchema["Tables"][TableName]["Insert"];
+
+export type TablesUpdate<TableName extends keyof DefaultSchema["Tables"]> =
+  DefaultSchema["Tables"][TableName]["Update"];
+
+export type Enums<EnumName extends keyof DefaultSchema["Enums"]> =
+  DefaultSchema["Enums"][EnumName];
+
+export const Constants = {
+  public: {
+    Enums: {
+      member_role: ["owner", "admin", "member"],
+      member_status: ["active", "deactivated"],
+    },
+  },
+} as const;
