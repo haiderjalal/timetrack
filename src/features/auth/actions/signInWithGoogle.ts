@@ -14,6 +14,8 @@ import {
 } from "../constants/auth";
 import { getLoginPath, getSafeRedirectPath } from "../utils/redirects";
 
+import type { Route } from "next";
+
 /**
  * Starts Google OAuth (PKCE). The page to return to travels in a short-lived
  * httpOnly cookie, so the redirect URL registered in Supabase stays exact.
@@ -35,7 +37,8 @@ export async function signInWithGoogle(formData: FormData): Promise<never> {
     secure: process.env.NODE_ENV === "production",
   });
 
-  redirect(oauthUrl);
+  // Google's consent page: an absolute URL from Supabase, not one of our routes.
+  redirect(oauthUrl as Route);
 }
 
 async function getGoogleOAuthUrl(): Promise<string | null> {
