@@ -1,6 +1,6 @@
 # TimeTrack: Business Rules
 
-> Status: **Draft v0.2.** Items marked **[ASSUMPTION]** are proposed defaults that need product-owner confirmation (see §10). Marked **[CONFIRMED]**: confirmed by the product owner on 2026-11-03 (§1 roles, §8 default working hours, Q8, Q10).
+> Status: **Draft v0.3.** Items marked **[ASSUMPTION]** are proposed defaults that need product-owner confirmation (see §10). Marked **[CONFIRMED]**: confirmed by the product owner on 2026-11-03 (§1 roles, §8 default working hours, Q1, Q2 per-day overtime, Q3, Q6, Q8, Q10).
 > These rules are implemented in pure TypeScript (`features/attendance/services/attendance-calculator.ts`) and covered by unit tests. Postgres only enforces the hard invariants listed in [database.md](database.md).
 
 ---
@@ -40,8 +40,8 @@
 
 1. Clock-in and clock-out times are **always set by the server** (`now()` in Postgres). The device clock is never trusted.
 2. A member can have **at most one open session** per org. A second clock-in is rejected with the message "You're already clocked in."
-3. A member can clock in and out **several times a day** (lunch, errands). All sessions count toward that day. **[ASSUMPTION]**
-4. Clocking in is allowed **any time**, including before shift start, after shift end, on weekends and holidays. That time counts (see overtime). **[ASSUMPTION]**
+3. A member can clock in and out **several times a day** (lunch, errands). All sessions count toward that day. **[CONFIRMED]** (Q1)
+4. Clocking in is allowed **any time**, including before shift start, after shift end, on weekends and holidays. That time counts (see overtime). **[CONFIRMED]** (Q1, Q3)
 5. A single session can last at most 24 hours.
 6. An optional note (≤ 500 chars) can be added at clock-out.
 
@@ -72,7 +72,9 @@ late      = is_working_day && no leave covering the start
 |   7   | `complete`    | worked ≥ required                                      | present; overtime = worked − required |
 |   8   | `short`       | 0 < worked < required                                  | present; shortfall recorded           |
 
-**Overtime is calculated per day.** A short Monday is **not** offset by a long Tuesday; both are reported. The monthly report also shows a **net balance** (overtime − shortfall) for orgs that want to offset them. **[ASSUMPTION]**
+**Overtime is calculated per day.** A short Monday is **not** offset by a long Tuesday; both are reported. **[CONFIRMED]** (Q2) Time worked on a day off or a holiday counts in full as overtime. **[CONFIRMED]** (Q3)
+
+The monthly report also shows a **net balance** (overtime − shortfall) for orgs that want to offset them. **[ASSUMPTION]** (still open; needed for the Phase 4 report)
 
 All overtime minutes count. No rounding, no minimum threshold. Durations are shown to the minute (e.g. `8h 42m`). **[ASSUMPTION]**
 
@@ -101,7 +103,7 @@ All overtime minutes count. No rounding, no minimum threshold. Durations are sho
 
 ## 6. Forgotten clock-out
 
-A `pg_cron` job runs every 15 minutes and auto-closes stale sessions. **[ASSUMPTION]** thresholds:
+A `pg_cron` job runs every 15 minutes and auto-closes stale sessions. **[CONFIRMED]** thresholds (Q6; the second row confirmed separately on 2026-11-03):
 
 | Situation                                       | Auto-close when          | Clock-out set to | Time credited    |
 | ----------------------------------------------- | ------------------------ | ---------------- | ---------------- |
@@ -154,12 +156,12 @@ For a selected month (org timezone), one row per active member (plus members dea
 
 | #   | Question                                                           | Proposed default                                               |
 | --- | ------------------------------------------------------------------ | -------------------------------------------------------------- |
-| Q1  | Can someone clock in/out several times a day (breaks)?             | **Yes**, all sessions are summed                               |
-| Q2  | Is overtime counted per day, or do short days offset long days?    | **Per day**, plus a "net" column                               |
-| Q3  | Does any time worked on weekends/holidays count fully as overtime? | **Yes**                                                        |
+| Q1  | Can someone clock in/out several times a day (breaks)?             | **Yes**, all sessions are summed ✅ confirmed 2026-11-03       |
+| Q2  | Is overtime counted per day, or do short days offset long days?    | **Per day** ✅ confirmed 2026-11-03; "net" column still open   |
+| Q3  | Does any time worked on weekends/holidays count fully as overtime? | **Yes** ✅ confirmed 2026-11-03                                |
 | Q4  | Does leave need approval? Who approves?                            | **Yes**, owner or any admin (not their own)                    |
 | Q5  | Leave quotas: enforce, warn, or ignore?                            | **Warn only** in v1                                            |
-| Q6  | Forgotten clock-out: auto-close rule above OK?                     | **Yes**, shift end + 4h                                        |
+| Q6  | Forgotten clock-out: auto-close rule above OK?                     | **Yes**, shift end + 4h ✅ confirmed 2026-11-03                |
 | Q7  | Can members edit their own entries?                                | **No**, admins only, with a reason                             |
 | Q8  | One timezone per org, or per member?                               | **Per org** ✅ confirmed 2026-11-03                            |
 | Q9  | Should clock-in be restricted by location / IP / Wi-Fi?            | **No** in v1 (planned later)                                   |
