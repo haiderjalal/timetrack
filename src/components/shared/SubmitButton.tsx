@@ -39,7 +39,10 @@ export function SubmitButton({
       })}
     >
       {pending ? (
-        <LoaderCircle className="animate-spin" aria-hidden="true" />
+        <LoaderCircle
+          className="opacity-60 motion-safe:animate-spin motion-safe:opacity-100"
+          aria-hidden="true"
+        />
       ) : (
         icon
       )}
