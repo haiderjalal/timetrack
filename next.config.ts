@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   poweredByHeader: false,
   images: {
+    // AVIF is smaller than WebP. WebP stays as the fallback for browsers without AVIF.
+    formats: ["image/avif", "image/webp"],
     // Google profile photos only; must match toCurrentUser's avatar host check.
     remotePatterns: [
       {

@@ -3,6 +3,8 @@ import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
+
 import { AUTH_COOKIE_OPTIONS } from "./cookies";
 import { getSupabaseEnv } from "./env";
 
@@ -21,6 +23,7 @@ export async function createSupabaseServerClient(): Promise<TypedSupabaseClient>
 
   return createServerClient<Database>(url, publishableKey, {
     cookieOptions: AUTH_COOKIE_OPTIONS,
+    global: { fetch: fetchWithTimeout },
     cookies: {
       getAll() {
         return cookieStore.getAll();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import { describeError, logger } from "@/lib/logger";
 
 import { AUTH_COOKIE_OPTIONS, hasAuthCookie } from "./cookies";
@@ -31,6 +32,7 @@ export async function refreshSession(
     const { url, publishableKey } = getSupabaseEnv();
     const supabase = createServerClient(url, publishableKey, {
       cookieOptions: AUTH_COOKIE_OPTIONS,
+      global: { fetch: fetchWithTimeout },
       cookies: {
         getAll() {
           return request.cookies.getAll();
