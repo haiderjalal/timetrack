@@ -1,7 +1,6 @@
-import { ROLE_LABELS } from "@/features/organizations/utils/roles";
 import { formatDateInZone } from "@/lib/time/formatDateInZone";
 
-import { InvitationActions } from "./InvitationActions";
+import { PendingInvitationRow } from "./PendingInvitationRow";
 
 import type { PendingInvitation } from "../types/invitation";
 
@@ -33,28 +32,18 @@ export function PendingInvitationsCard({
         </p>
       ) : (
         <ul className="flex flex-col divide-y">
-          {invitations.map((invitation) => {
-            const expiry = invitation.isExpired
-              ? "Expired"
-              : `Expires ${formatDateInZone(invitation.expiresAt, timeZone)}`;
-
-            return (
-              <li
-                key={invitation.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {invitation.email}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {ROLE_LABELS[invitation.role]} · {expiry}
-                  </p>
-                </div>
-                <InvitationActions orgSlug={orgSlug} invitation={invitation} />
-              </li>
-            );
-          })}
+          {invitations.map((invitation) => (
+            <PendingInvitationRow
+              key={invitation.id}
+              orgSlug={orgSlug}
+              invitation={invitation}
+              expiry={
+                invitation.isExpired
+                  ? "Expired"
+                  : `Expires ${formatDateInZone(invitation.expiresAt, timeZone)}`
+              }
+            />
+          ))}
         </ul>
       )}
     </section>
