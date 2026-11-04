@@ -36,6 +36,22 @@ export function getLateAfter(startTime: string, graceMinutes: number): string {
   return formatClockTime(toMinuteOfDay(startTime) + graceMinutes);
 }
 
+/** The newest version that started on or before `isoDate`. */
+export function getVersionInEffect(
+  versions: readonly WorkSchedule[],
+  isoDate: string,
+): WorkSchedule | null {
+  return versions
+    .filter((candidate) => candidate.effectiveFrom <= isoDate)
+    .reduce<WorkSchedule | null>(
+      (latest, candidate) =>
+        !latest || candidate.effectiveFrom > latest.effectiveFrom
+          ? candidate
+          : latest,
+      null,
+    );
+}
+
 export interface ScheduledDay {
   day: ScheduleDay;
   graceMinutes: number;
@@ -50,15 +66,7 @@ export function getScheduledDay(
   isoDate: string,
   weekday: number,
 ): ScheduledDay | null {
-  const version = versions
-    .filter((candidate) => candidate.effectiveFrom <= isoDate)
-    .reduce<WorkSchedule | null>(
-      (latest, candidate) =>
-        !latest || candidate.effectiveFrom > latest.effectiveFrom
-          ? candidate
-          : latest,
-      null,
-    );
+  const version = getVersionInEffect(versions, isoDate);
   const day = version?.days.find((item) => item.weekday === weekday);
 
   if (!version || !day) return null;
