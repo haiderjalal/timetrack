@@ -1,11 +1,11 @@
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Users } from "lucide-react";
 
-import { orgDashboardPath } from "@/constants/routes";
+import { orgDashboardPath, orgTeamPath } from "@/constants/routes";
 
 import type { LucideIcon } from "lucide-react";
 import type { Route } from "next";
 
-export type NavItemId = "dashboard";
+export type NavItemId = "dashboard" | "team";
 
 export interface NavItem {
   label: string;
@@ -33,14 +33,21 @@ export const NAV_ITEMS: Record<NavItemId, NavItem> = {
     href: orgDashboardPath,
     icon: LayoutDashboard,
   },
+  team: {
+    label: "Team",
+    tabLabel: "Team",
+    segment: "team",
+    href: orgTeamPath,
+    icon: Users,
+  },
 };
 
 // Only pages that exist are linked (docs/design-system.md §4). Timesheet and
-// Leave join "Me", and Attendance, Team, Approvals, Reports and Settings join
+// Leave join "Me", and Attendance, Approvals, Reports and Settings join
 // "Manage", in the roadmap phase that builds each page.
 export const NAV_GROUPS: readonly NavGroup[] = [
   { id: "me", label: "Me", items: ["dashboard"], managersOnly: false },
-  { id: "manage", label: "Manage", items: [], managersOnly: true },
+  { id: "manage", label: "Manage", items: ["team"], managersOnly: true },
 ];
 
 export function getNavItemBySegment(segment: string | null): NavItem | null {

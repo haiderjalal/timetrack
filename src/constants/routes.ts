@@ -14,3 +14,13 @@ export const ROUTES = {
 export function orgDashboardPath(orgSlug: string): Route {
   return `/o/${encodeURIComponent(orgSlug)}/dashboard` as Route;
 }
+
+/** The team page of one org, for owners and admins. */
+export function orgTeamPath(orgSlug: string): Route {
+  return `/o/${encodeURIComponent(orgSlug)}/team` as Route;
+}
+
+/** The page that accepts an invitation. Tokens are URL-safe, so encoding changes nothing. */
+export function invitePath(token: string): Route {
+  return `/invite/${encodeURIComponent(token)}` as Route;
+}
