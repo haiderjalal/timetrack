@@ -491,3 +491,40 @@ regenerate them after every migration with
   `slug_taken` (P0001). Postgres wording never reaches the browser.
 - **Profiles and their email** come from Google at sign-up. Later Google profile changes don't sync
   yet.
+
+### Built in Phase 3 (`feature/time-tracking`)
+
+| Migration (`supabase/migrations/`) | Contents                                                                                                         |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `20261103130000_time_entries.sql`  | `entry_source`, `time_entries` (§4.7) and `audit_log` (§4.8) with their grants and policies                      |
+| `20261103130100_auto_close.sql`    | `private.auto_close_plan()`, `private.close_stale_entries()` and the `auto-close-stale-entries` pg_cron job (§7) |
+| `20261103130200_clock_in_out.sql`  | `clock_in(p_org_id, p_source)` and `clock_out(p_org_id, p_note, p_source)`                                       |
+
+pgTAP: `04_time_entries.test.sql` (41 assertions) plus 4 more in `00_schema.test.sql`, 114 in total.
+They cover clocking in and out, every auto-close case (working day, after hours, day off, night
+shift, the 24h cap, schedule versions), the audit entries, who can read sessions and the audit log,
+that nobody writes either directly, and the overlap, 24h and membership constraints.
+
+- **Auto-close is capped at 24h.** A clock-in at 00:30 for a 22:00–06:00 shift would otherwise stay
+  open for 33h, past the 24h limit on a session (business-rules §3.5). Both thresholds use
+  `least(…, clock_in_at + 24h)`.
+- **"Ends the next day" means `end_time <= start_time`**, in the job and in the app
+  (`crossesMidnight()`), so a shift with equal start and end times is 24h long.
+- **`clock_in` / `clock_out` close the caller's own stale session first.** If pg_cron misses a run
+  (or isn't available, as in the PGlite test run), nobody gets stuck behind an old open session.
+- **`clock_out` takes `p_source`** like `clock_in`, so `clock_out_source` can say `mobile` later.
+  Members may only pass `web` or `mobile`; `admin` and `system` are for corrections and the job.
+- **Error codes:** `not_authenticated` / `not_a_member` (42501), `invalid_input` (22023),
+  `already_clocked_in` / `not_clocked_in` / `session_overlap` (P0001). An open session overlaps
+  any new one, so a second clock-in usually trips the no-overlap constraint before the
+  one-open-session index; both report `already_clocked_in` when an open session exists.
+- **`time_entries` and `audit_log` grant only `SELECT`** to signed-in users. Even admins change
+  sessions through a function (`adjust_time_entry`, Phase 4), which writes the audit entry.
+- **`audit_log.actor_id` is `on delete set null`**, and sessions go with their membership
+  (`on delete cascade`), so deleting an account never fails on its history.
+- **Deferred to Phase 4:** `time_entries_org_date` (for org-wide reports), `get_daily_totals()` and
+  the Realtime broadcast trigger. The member pages read one person's range through
+  `time_entries_member_date`.
+- **Applying by hand:** the migrations can also be pasted into the SQL Editor as one script that
+  records itself in `supabase_migrations.schema_migrations`, so a later `supabase db push` skips
+  them.

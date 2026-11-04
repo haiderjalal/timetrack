@@ -92,18 +92,18 @@ shadcn/ui gives us the primitives (Button, Input, Select, Dialog, Sheet, Popover
 
 | Component                   | Purpose                                                   | Key states / variants                                                                                                                                                                                                            |
 | --------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClockCard**               | Main clock in/out surface                                 | `idle` (Clock in) · `running` (timer, ring, Clock out) · `pending` (spinner, disabled) · `done` · `on_leave` · `day_off` ("counts as overtime" hint) · `auto_closed` warning · `error` (inline + retry)                          |
+| **ClockCard** ✅            | Main clock in/out surface                                 | `idle` (Clock in) · `running` (timer, ring, Clock out) · `pending` (spinner, disabled) · `done` · `on_leave` · `day_off` ("counts as overtime" hint) · `auto_closed` warning · `error` (inline + retry)                          |
 | **ProgressRing** ✅         | Today's progress toward required hours                    | Built (`components/shared/ProgressRing`): a native `<progress>` with `aria-valuetext`; 0–100% fills **green**, past 100% a second lap fills **purple** (overtime); `fillOnLoad`; `on-brand` variant. Center label: `6h 12m / 8h` |
 | **StatusBadge** ✅          | Day status pill: dot + label                              | Built (`components/shared/StatusBadge`): tones present · short · absent · leave · overtime · off                                                                                                                                 |
 | **TabSwitcher** ✅          | Small accessible tabs (WAI-ARIA tabs pattern)             | One tab stop, arrow keys / Home / End, server-rendered panels passed in; ~1 KB instead of Radix Tabs                                                                                                                             |
 | **LogoMark / Logo** ✅      | Brand mark and wordmark                                   | Mark scales via `className` (`size-7` default)                                                                                                                                                                                   |
-| **ClockStatusChip**         | Compact running timer in the top bar on every page        | hidden when idle · green dot + `03:12:45` when running · click → dashboard                                                                                                                                                       |
+| **ClockStatusChip** ✅      | Compact running timer in the top bar on every page        | hidden when idle · green dot + `03:12:45` when running · click → dashboard                                                                                                                                                       |
 | **DurationText**            | Formats minutes; screen-reader label "7 hours 42 minutes" | default · `signed` (+25m / −40m)                                                                                                                                                                                                 |
-| **AttendanceCalendar**      | Month grid; each day shows status color + hours           | keyboard grid navigation (arrow keys), legend, today outline, selected day                                                                                                                                                       |
+| **AttendanceCalendar** ✅   | Month grid; each day shows status color + hours           | keyboard grid navigation (arrow keys), legend, today outline, selected day                                                                                                                                                       |
 | **StatCard**                | KPI tile: label, big tabular value, sub-line              | default · loading skeleton                                                                                                                                                                                                       |
 | **LiveBoard**               | Who's in right now, grouped                               | groups: Clocked in · Not in yet · On leave · Day off; each row: avatar, name, since 09:02, running duration                                                                                                                      |
 | **ReportTable**             | Monthly report (TanStack Table)                           | sticky member column, sortable numeric columns, totals footer, row → member month                                                                                                                                                |
-| **SessionList**             | Today's / a day's sessions                                | each: in → out, duration, source icon, `auto_closed` tag, admin "Edit"                                                                                                                                                           |
+| **SessionList** ✅          | Today's / a day's sessions                                | each: in → out, duration, source icon, `auto_closed` tag, admin "Edit"                                                                                                                                                           |
 | **LeaveRequestSheet**       | Apply for leave                                           | type select, date / range picker, half-day segmented control, reason, quota hint, overlap error                                                                                                                                  |
 | **ApprovalCard**            | Pending leave for admins                                  | summary, conflict hint (others off that day), Approve / Reject + note                                                                                                                                                            |
 | **ScheduleEditor**          | Working-hours editor                                      | 7 rows: toggle, start, end, required hours; "Copy Monday to weekdays"; effective-from date                                                                                                                                       |
@@ -197,9 +197,32 @@ Primary journey for an owner: **Attendance** (morning check) → **Approvals** �
   Today that's Dashboard, so the Manage group is empty and hidden. It appears for owners and admins
   once a Manage page ships.
 - **Bottom tabs** show the "Me" pages and render only when there are at least two (a bar with one
-  tab is noise). They appear with Timesheet in Phase 3; the Manage sheet comes with the first Manage
+  tab is noise). Since Phase 3 that's Home and Time; the Manage sheet comes with the first Manage
   page.
 - The tablet rail keeps labels for screen readers (`sr-only`) and shows them as tooltips (`title`).
+
+### As built (Phase 3)
+
+- **Dashboard:** the Today card holds the greeting, the shift line ("Shift today 09:00 – 18:00 · 8h
+  required · late after 09:15"), the **ClockCard** and today's **SessionList**. The right column is
+  **This week** (a bar per day: required time green, or amber when short, overtime purple; +/− per
+  day; totals), then Working hours and the org card.
+- **ClockCard** (`src/features/time-tracking/components`): ring + "You're clocked in since 09:02" +
+  stopwatch (`text-display` from `sm`), "3h 51m to go" or "+25m overtime", one primary button
+  (Clock in / Clock out) and "Add note" while running. On a day off the ring becomes a "Day off"
+  disc with the overtime hint. Pending: spinner and "Clocking in…". Errors: inline alert with "Try
+  again". The auto-closed notice (amber, `TriangleAlert`) stays until the next clock-in.
+  `on_leave` arrives with leave (Phase 5).
+- **ClockStatusChip** sits between the date and the user menu: green dot + stopwatch, just the dot
+  on phones; its accessible name is "Clocked in since 09:02. Open the dashboard".
+- **Timesheet** (`/o/[orgSlug]/timesheet?month=YYYY-MM`): month name with previous/next (no next past
+  this month), four stat tiles (Worked of required, Overtime, Shortfall, Present with absent/late),
+  an auto-closed warning when there are any, the **AttendanceCalendar**, then every day so far,
+  newest first, with its sessions. Calendar cells link to those days (`#day-YYYY-MM-DD`).
+- **AttendanceCalendar** is a `<table role="grid">`: one tab stop (today), arrow keys, Home/End.
+  Each status has its own icon (✓ complete, ↗ overtime, ↘ short, ✕ absent, – day off, clock in
+  progress) and soft tone, and the cell's name says everything in words. Phones show the day and
+  icon; from `sm` the label ("Short · Late") and hours too. Days still to come are plain numbers.
 
 ---
 

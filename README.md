@@ -4,9 +4,10 @@ Attendance and time tracking for teams. Members sign in with Google and clock in
 TimeTrack records the hours worked against the organization's working hours, counts overtime, and
 handles leave requests. Owners get a monthly report for every member.
 
-> **Status:** Phase 1 of the [roadmap](docs/roadmap.md): Google sign-in, onboarding (create an
-> organization with its working hours), the app shell and the dashboard. Clocking in and out
-> arrives in Phase 3.
+> **Status:** Phases 1 and 3 of the [roadmap](docs/roadmap.md): Google sign-in, onboarding
+> (create an organization with its working hours), the app shell, clocking in and out from the
+> dashboard, automatic closing of forgotten sessions, and a personal Timesheet with a month
+> calendar. Invitations (Phase 2), admin reports (Phase 4) and leave (Phase 5) come next.
 
 ## Tech stack
 
@@ -56,6 +57,12 @@ npx supabase link --project-ref <project-ref>
 npx supabase db push
 npx supabase gen types typescript --linked > src/types/database.types.ts
 ```
+
+No CLI? Paste the migrations, in file-name order, into **SQL Editor → New query** as one script
+wrapped in `begin; … commit;`. Add an insert of each migration's version into
+`supabase_migrations.schema_migrations`, so that a later `supabase db push` skips them. The auto-close
+job needs `pg_cron`, which the migration enables; if Supabase refuses, turn it on once in
+**Database → Extensions**.
 
 Row Level Security is covered by pgTAP tests in `supabase/tests/database`. Run them against the
 local database with `npm run db:start` then `npx supabase test db` (Docker required).
