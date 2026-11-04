@@ -1,25 +1,27 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 
 import { orgTeamPath } from "@/constants/routes";
 import { requireMembership } from "@/features/organizations/services/membership";
 import { canInviteAs } from "@/features/organizations/utils/roles";
+import { getEmailSettings } from "@/lib/email/emailSettings";
 import { logger } from "@/lib/logger";
 import { inviteMembersSchema } from "@/lib/validations/invitation.schema";
 
 import { inviteMembersToOrganization } from "../services/inviteMembers";
 import { sendInvitationEmails } from "../services/sendInvitationEmails";
 import { describeInvitationFailure } from "../utils/invitationErrors";
+import { describeInviteSummary } from "../utils/describeInviteSummary";
 
 import type { InviteMembersInput } from "@/lib/validations/invitation.schema";
 import type { ApiResponse } from "@/types/api";
 import type { InviteMembersSummary } from "../types/invitation";
 
 /**
- * Invites people from the team page. The response lists addresses and counts
- * only: the tokens go into the emails, which send after the response.
+ * Invites people from the team page. It sends each email before answering, so
+ * the result says whether the emails went out. The response carries addresses
+ * and counts only: the tokens travel in the emails.
  */
 export async function inviteMembers(
   orgSlug: string,
@@ -47,6 +49,15 @@ export async function inviteMembers(
     };
   }
 
+  // Checked before anything is created, so a missing sender leaves no pending invitations behind.
+  if (!getEmailSettings(process.env)) {
+    return {
+      success: false,
+      message:
+        "Email isn't set up yet, so no invitations were sent. Add EMAIL_FROM and RESEND_API_KEY, then try again.",
+    };
+  }
+
   const emails = [
     ...new Set(parsed.data.emails.map((email) => email.toLowerCase())),
   ];
@@ -64,29 +75,30 @@ export async function inviteMembers(
   }
 
   const { sent, alreadyMembers, failed } = result.outcome;
-  const { name: organizationName } = membership.organization;
+  const notEmailed = await sendInvitationEmails({
+    invitations: sent,
+    role,
+    organizationName: membership.organization.name,
+  });
 
-  if (sent.length > 0) {
-    after(() =>
-      sendInvitationEmails({ invitations: sent, role, organizationName }),
-    );
-  }
+  const summary: InviteMembersSummary = {
+    invited: sent
+      .map((invitation) => invitation.email)
+      .filter((email) => !notEmailed.includes(email)),
+    alreadyMembers,
+    failed: [...failed, ...notEmailed],
+  };
 
   revalidatePath(orgTeamPath(orgSlug));
   logger.info("invitations.sent", {
     orgId: membership.organization.id,
-    sent: sent.length,
+    invited: summary.invited.length,
     alreadyMembers: alreadyMembers.length,
-    failed: failed.length,
+    failed: summary.failed.length,
   });
 
-  return {
-    success: true,
-    message: "Invitations sent.",
-    data: {
-      invited: sent.map((invitation) => invitation.email),
-      alreadyMembers,
-      failed,
-    },
-  };
+  const message = describeInviteSummary(summary);
+  if (summary.failed.length > 0) return { success: false, message };
+
+  return { success: true, message, data: summary };
 }
