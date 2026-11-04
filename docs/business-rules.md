@@ -24,6 +24,12 @@
 - An org always has **at least one active owner** (enforced in the database).
 - A person can belong to **several orgs**, each with its own role. **[CONFIRMED]**
 - Removing someone **deactivates** them: their history stays in reports, and they lose access immediately.
+- Each address has one open invitation at a time. Inviting it again replaces the old link. Invitations expire after 7 days and work once. **[ASSUMPTION]**
+- Inviting a deactivated member brings back their own row with the new role, so their history stays linked. **[ASSUMPTION]**
+- One invite request covers at most 25 addresses. **[ASSUMPTION]**
+- Owners change roles only between admin and member. Owner roles stay as they are until ownership transfer exists. **[ASSUMPTION]**
+- Nobody can deactivate themselves; leaving an org isn't built yet. **[ASSUMPTION]**
+- Invitations aren't rate-limited until Phase 6 adds rate limits (see [architecture.md §8](architecture.md#8-security)). **[ASSUMPTION]**
 
 ## 2. Key terms
 

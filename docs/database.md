@@ -1,7 +1,7 @@
 # TimeTrack: Database Design
 
 > Status: **v0.2** · Engine: Supabase Postgres · Date: 2026-11-03
-> This is the design spec. Phase 1 tables are built (see [§10](#10-implementation-status)); the rest arrive with their roadmap phase, through ordered migrations in `supabase/migrations/`.
+> This is the design spec. Phases 1 and 2 are built (see [§10](#10-implementation-status)); the rest arrive with their roadmap phase, through ordered migrations in `supabase/migrations/`.
 
 ---
 
@@ -491,3 +491,30 @@ regenerate them after every migration with
   `slug_taken` (P0001). Postgres wording never reaches the browser.
 - **Profiles and their email** come from Google at sign-up. Later Google profile changes don't sync
   yet.
+
+### Built in Phase 2 (`feature/invitations`)
+
+| Migration (`supabase/migrations/`)     | Contents                                                                                                                    |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `20261104090000_audit_log.sql`         | `audit_log`: append-only, admins read it, and only the RPCs below write to it                                               |
+| `20261104090100_invitations.sql`       | `private.active_role()`, `invitations`, `create_invitation`, `revoke_invitation`, `preview_invitation`, `accept_invitation` |
+| `20261104090200_member_management.sql` | `change_member_role` (owners, admin or member), `deactivate_member` (owners anyone, admins members only)                    |
+
+pgTAP tests (127 assertions across six files) cover the invitation rules: who can invite whom, the
+email match, single use, expiry, revocation, the anon lockout, role and deactivation rules, audit
+rows, and the last-owner guard.
+
+### Decisions made in Phase 2
+
+- **Joining is a button press.** `/invite/[token]` only reads the invitation through
+  `preview_invitation`. `accept_invitation` runs when the person presses Join.
+- **The preview reveals little.** A signed-in person sees the org name and role, and whether the
+  address matches their account. The invited address itself is never returned.
+- **A deactivated member keeps one row.** Accepting a new invitation reactivates it with the invited
+  role and writes a `member.reactivated` audit row.
+- **Errors are short codes**, as with `create_organization`: `not_allowed`, `invalid_role`,
+  `already_member`, `invitation_conflict`, `invitation_unavailable`, `invitation_expired`,
+  `invitation_email_mismatch`, `member_not_found`, `cannot_deactivate_self` and `last_owner`.
+- **Owner roles don't change here.** `change_member_role` only moves people between admin and member.
+- **`audit_log` can't be updated or deleted by anyone**, not even the service role. Signed-in users
+  can't insert into it directly; rows come from the RPCs.

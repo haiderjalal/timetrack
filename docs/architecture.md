@@ -223,9 +223,10 @@ A single RPC, `create_organization()`, creates the org, the owner membership, th
 
 ### 6.3 Invite a teammate
 
-1. Admin enters emails and a role → service creates invitations. Each token is 32 random bytes, and **only its SHA-256 hash is stored**.
-2. `after()` sends the Resend email with `/invite/{token}` (7-day expiry, single use, revocable).
-3. Invitee signs in with Google → RPC `accept_invitation(token)` checks the hash, expiry and revocation, and that the **invite email matches the Google email**. Then it creates the membership.
+1. Admin pastes emails on `/o/{slug}/team` and picks a role (owners can invite admins or members; admins only members). The action checks the role, then creates one invitation per address through `create_invitation`. Each token is 32 random bytes, and **only its SHA-256 hash is stored**. Inviting an address again revokes its open invitation.
+2. After the response, `after()` sends each invitee an email with `/invite/{token}` (7-day expiry, single use, revocable from the team page). Admins can resend, which issues a fresh link.
+3. The invitee opens the link and signs in with Google if needed. `/invite/[token]` shows the org and role through `preview_invitation`, and changes nothing. The person presses **Join**, which calls `accept_invitation(token)`: it checks the hash, expiry and revocation, and that the **invite email matches the Google email**. Then it creates the membership (or reactivates a deactivated one) and opens the org's dashboard.
+4. Joining on a button press, not on page load, means an email link scanner that fetches the URL can't use up the invitation.
 
 ### 6.4 Clock in / clock out
 
