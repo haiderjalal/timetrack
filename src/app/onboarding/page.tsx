@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Logo } from "@/components/shared/Logo";
 import { ROUTES } from "@/constants/routes";
 import { CurrentUserMenu } from "@/features/auth/components/CurrentUserMenu";
+import { MyInvitations } from "@/features/invitations/components/MyInvitations";
 import { OnboardingForm } from "@/features/organizations/components/OnboardingForm";
 import { getSiteUrl } from "@/lib/getSiteUrl";
 import { listTimezones } from "@/lib/time/timezones";
@@ -54,6 +55,9 @@ export default function OnboardingPage() {
             You&apos;ll be its owner.
           </p>
         </div>
+        <Suspense fallback={null}>
+          <MyInvitations />
+        </Suspense>
         <OnboardingForm
           timezones={listTimezones()}
           siteHost={getSiteUrl().host}

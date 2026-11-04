@@ -499,8 +499,10 @@ regenerate them after every migration with
 | `20261104090100_invitations.sql`       | `private.active_role()`, `invitations`, `create_invitation`, `revoke_invitation`, `preview_invitation`, `accept_invitation` |
 | `20261104090200_member_management.sql` | `change_member_role` (owners, admin or member), `deactivate_member` (owners anyone, admins members only)                    |
 
-The member RPCs write to `audit_log`, which Phase 3 creates. pgTAP tests: `04_invitations.test.sql`
-(31 assertions) and `05_member_management.test.sql` (27). They cover who can invite whom, the email
+`20261104090300_join_by_email.sql` moves the join rules into `private.join_invitation(id)`, which
+both `accept_invitation(token)` and the new `accept_my_invitation(id)` call. `list_my_invitations()`
+returns a signed-in person's open invitations without their tokens. pgTAP tests: `04_invitations.test.sql`
+(31 assertions), `05_member_management.test.sql` (27) and `06_join_by_email.test.sql` (17). They cover who can invite whom, the email
 match, single use, expiry, revocation, the anon lockout, the role and deactivation rules, the audit
 rows, and the last-owner guard.
 
