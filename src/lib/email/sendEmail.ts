@@ -1,5 +1,6 @@
 import "server-only";
 
+import { render } from "@react-email/components";
 import { Resend } from "resend";
 
 import { logger } from "@/lib/logger";
@@ -43,12 +44,14 @@ export async function sendEmail({
   }
 
   try {
+    // Rendered here rather than by the SDK, which loads its renderer from a package this app doesn't install.
+    const html = await render(react);
     const { error } = await withTimeout(
       new Resend(settings.apiKey).emails.send({
         from: settings.from,
         to,
         subject,
-        react,
+        html,
       }),
       SEND_TIMEOUT_MS,
     );
