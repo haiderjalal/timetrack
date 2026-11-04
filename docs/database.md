@@ -492,29 +492,39 @@ regenerate them after every migration with
 - **Profiles and their email** come from Google at sign-up. Later Google profile changes don't sync
   yet.
 
-### Built in Phase 2 (`feature/invitations`)
+### Built in Phase 3 (`feature/time-tracking`)
 
-| Migration (`supabase/migrations/`)     | Contents                                                                                                                    |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `20261104090000_audit_log.sql`         | `audit_log`: append-only, admins read it, and only the RPCs below write to it                                               |
-| `20261104090100_invitations.sql`       | `private.active_role()`, `invitations`, `create_invitation`, `revoke_invitation`, `preview_invitation`, `accept_invitation` |
-| `20261104090200_member_management.sql` | `change_member_role` (owners, admin or member), `deactivate_member` (owners anyone, admins members only)                    |
+| Migration (`supabase/migrations/`) | Contents                                                                                                         |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `20261103130000_time_entries.sql`  | `entry_source`, `time_entries` (§4.7) and `audit_log` (§4.8) with their grants and policies                      |
+| `20261103130100_auto_close.sql`    | `private.auto_close_plan()`, `private.close_stale_entries()` and the `auto-close-stale-entries` pg_cron job (§7) |
+| `20261103130200_clock_in_out.sql`  | `clock_in(p_org_id, p_source)` and `clock_out(p_org_id, p_note, p_source)`                                       |
 
-pgTAP tests (127 assertions across six files) cover the invitation rules: who can invite whom, the
-email match, single use, expiry, revocation, the anon lockout, role and deactivation rules, audit
-rows, and the last-owner guard.
+pgTAP: `04_time_entries.test.sql` (41 assertions) plus 4 more in `00_schema.test.sql`, 114 in total.
+They cover clocking in and out, every auto-close case (working day, after hours, day off, night
+shift, the 24h cap, schedule versions), the audit entries, who can read sessions and the audit log,
+that nobody writes either directly, and the overlap, 24h and membership constraints.
 
-### Decisions made in Phase 2
-
-- **Joining is a button press.** `/invite/[token]` only reads the invitation through
-  `preview_invitation`. `accept_invitation` runs when the person presses Join.
-- **The preview reveals little.** A signed-in person sees the org name and role, and whether the
-  address matches their account. The invited address itself is never returned.
-- **A deactivated member keeps one row.** Accepting a new invitation reactivates it with the invited
-  role and writes a `member.reactivated` audit row.
-- **Errors are short codes**, as with `create_organization`: `not_allowed`, `invalid_role`,
-  `already_member`, `invitation_conflict`, `invitation_unavailable`, `invitation_expired`,
-  `invitation_email_mismatch`, `member_not_found`, `cannot_deactivate_self` and `last_owner`.
-- **Owner roles don't change here.** `change_member_role` only moves people between admin and member.
-- **`audit_log` can't be updated or deleted by anyone**, not even the service role. Signed-in users
-  can't insert into it directly; rows come from the RPCs.
+- **Auto-close is capped at 24h.** A clock-in at 00:30 for a 22:00–06:00 shift would otherwise stay
+  open for 33h, past the 24h limit on a session (business-rules §3.5). Both thresholds use
+  `least(…, clock_in_at + 24h)`.
+- **"Ends the next day" means `end_time <= start_time`**, in the job and in the app
+  (`crossesMidnight()`), so a shift with equal start and end times is 24h long.
+- **`clock_in` / `clock_out` close the caller's own stale session first.** If pg_cron misses a run
+  (or isn't available, as in the PGlite test run), nobody gets stuck behind an old open session.
+- **`clock_out` takes `p_source`** like `clock_in`, so `clock_out_source` can say `mobile` later.
+  Members may only pass `web` or `mobile`; `admin` and `system` are for corrections and the job.
+- **Error codes:** `not_authenticated` / `not_a_member` (42501), `invalid_input` (22023),
+  `already_clocked_in` / `not_clocked_in` / `session_overlap` (P0001). An open session overlaps
+  any new one, so a second clock-in usually trips the no-overlap constraint before the
+  one-open-session index; both report `already_clocked_in` when an open session exists.
+- **`time_entries` and `audit_log` grant only `SELECT`** to signed-in users. Even admins change
+  sessions through a function (`adjust_time_entry`, Phase 4), which writes the audit entry.
+- **`audit_log.actor_id` is `on delete set null`**, and sessions go with their membership
+  (`on delete cascade`), so deleting an account never fails on its history.
+- **Deferred to Phase 4:** `time_entries_org_date` (for org-wide reports), `get_daily_totals()` and
+  the Realtime broadcast trigger. The member pages read one person's range through
+  `time_entries_member_date`.
+- **Applying by hand:** the migrations can also be pasted into the SQL Editor as one script that
+  records itself in `supabase_migrations.schema_migrations`, so a later `supabase db push` skips
+  them.

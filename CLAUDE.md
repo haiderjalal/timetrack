@@ -84,6 +84,13 @@ All of `lint`, `format:check`, `typecheck`, `test`, `test:e2e` and `build` must 
 - **Forms:** React Hook Form + Zod. Schemas live in `src/lib/validations` and the Server Action
   parses the same schema again. Server-side failures come back as `ApiFailure` with field paths.
 - **Members never send timestamps.** Clock times come from Postgres `now()` via RPC.
+- **Live timers** use `useLiveNow(serverNow, isRunning)` from
+  `@/features/time-tracking/hooks/useLiveNow` (one shared ticker, immune to a wrong device clock).
+  `serverNow` is read in a service, not a component (`react-hooks/purity` forbids `Date.now()` in
+  render). Timers are `aria-hidden`; announce state changes once in a `role="status"` region.
+- **Attendance math** lives only in `src/features/attendance/services/attendanceCalculator.ts`
+  (pure, unit-tested against business-rules.md §4). Pages and services pass it sessions and the
+  schedule version for each date (`getScheduledDay`); never recompute overtime elsewhere.
 - **Supabase:** `auto_expose_new_tables = false`, so every migration revokes and then writes its
   own grants and RLS policies, and every policy gets a pgTAP test in `supabase/tests/database/`.
   After a migration, regenerate `src/types/database.types.ts`. Repositories select named columns

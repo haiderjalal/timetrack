@@ -15,6 +15,7 @@ describe("getZonedNow", () => {
       weekday: 2,
       hour: 2,
       minute: 30,
+      second: 0,
     });
   });
 
@@ -24,6 +25,7 @@ describe("getZonedNow", () => {
       weekday: 1,
       hour: 16,
       minute: 30,
+      second: 0,
     });
   });
 

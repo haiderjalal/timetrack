@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 
 // The signed-in app (onboarding, /o/[orgSlug]) needs a real Supabase session,
 // which these tests can't create. The onboarding form's validation is covered
-// by OnboardingForm.test.tsx, and tenant isolation by supabase/tests (pgTAP).
+// by OnboardingForm.test.tsx, the clock card by ClockCard.test.tsx, the month
+// calendar by AttendanceCalendar.test.tsx, and clocking rules and tenant
+// isolation by supabase/tests (pgTAP).
 
 test.describe("app routes for signed-out visitors", () => {
   test("the post-sign-in resolver asks who you are first", async ({
@@ -26,6 +28,13 @@ test.describe("app routes for signed-out visitors", () => {
     await expect(page.locator('input[name="next"]')).toHaveValue(path);
   });
 
+  test("the timesheet keeps its month through sign-in", async ({ page }) => {
+    const path = "/o/acme/timesheet?month=2026-10";
+    await page.goto(path);
+
+    await expect(page).toHaveURL(`/login?next=${encodeURIComponent(path)}`);
+  });
+
   test("a forged session cookie does not open the app", async ({
     page,
     context,
@@ -38,7 +47,11 @@ test.describe("app routes for signed-out visitors", () => {
       },
     ]);
 
-    for (const path of ["/onboarding", "/o/acme/dashboard"]) {
+    for (const path of [
+      "/onboarding",
+      "/o/acme/dashboard",
+      "/o/acme/timesheet",
+    ]) {
       await page.goto(path);
       await expect(page).toHaveURL(`/login?next=${encodeURIComponent(path)}`);
     }

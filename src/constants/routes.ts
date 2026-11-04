@@ -15,12 +15,8 @@ export function orgDashboardPath(orgSlug: string): Route {
   return `/o/${encodeURIComponent(orgSlug)}/dashboard` as Route;
 }
 
-/** The team page of one org, for owners and admins. */
-export function orgTeamPath(orgSlug: string): Route {
-  return `/o/${encodeURIComponent(orgSlug)}/team` as Route;
-}
-
-/** The page that accepts an invitation. Tokens are URL-safe, so encoding changes nothing. */
-export function invitePath(token: string): Route {
-  return `/invite/${encodeURIComponent(token)}` as Route;
+/** The person's own timesheet in one org, optionally for a month (`YYYY-MM`). */
+export function orgTimesheetPath(orgSlug: string, month?: string): Route {
+  const path = `/o/${encodeURIComponent(orgSlug)}/timesheet`;
+  return (month ? `${path}?month=${month}` : path) as Route;
 }

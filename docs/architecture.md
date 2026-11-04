@@ -172,9 +172,9 @@ timetrack/
 │   │   ├── dashboard/
 │   │   ├── members/
 │   │   ├── invitations/
-│   │   ├── schedules/
-│   │   ├── time-tracking/
-│   │   ├── attendance/      AttendanceCalculator (pure), live board
+│   │   ├── schedules/       working-hours versions, the rule for any date
+│   │   ├── time-tracking/   clock actions, ClockCard, SessionList, top-bar timer, useLiveNow
+│   │   ├── attendance/      AttendanceCalculator (pure), Timesheet calendar; later the live board
 │   │   ├── leave/
 │   │   └── reports/
 │   ├── components/
@@ -236,6 +236,15 @@ A single RPC, `create_organization()`, creates the org, the owner membership, th
 4. A trigger broadcasts the change to the org's Realtime channel, and the admin live board updates instantly.
 5. The UI updates immediately with `useOptimistic` and rolls back if the action fails.
 
+**As built (Phase 3, `feature/time-tracking`):**
+
+- `ClockCard` (client) → `clockIn` / `clockOut` Server Actions (`src/features/time-tracking/actions/clock.ts`): parse the shared schema (`src/lib/validations/clock.schema.ts`), `requireMembership()`, call the RPC, then `refresh()` so the whole page (card, sessions, week, top-bar timer) re-renders from the server. Refusals (`already_clocked_in`, `not_clocked_in`, …) map to plain messages in `utils/clockErrors.ts`; the page refreshes on those too, so a second tab shows the real state. The card shows a pending state while the action runs instead of an optimistic one: the server's answer arrives in one round trip.
+- `clock_in` / `clock_out` first close the caller's own **stale** session with the auto-close rule (§6.7), so a missed job run never blocks anyone. Clocking out a stale session returns it with `auto_closed = true`, and the card says so.
+- **Live timers** (`hooks/useLiveNow.ts`) start from the server's `Date.now()` at render and add the seconds that pass on the device, through one shared one-second ticker. A wrong device clock never skews them, and server render and hydration show the same value. Screen readers hear state changes once, never the ticking timer.
+- The note at clock-out is a single optional field with `maxLength`, validated by the shared Zod schema in the action, without React Hook Form: one field doesn't justify ~10 KB on the dashboard.
+- **Not yet:** the Upstash rate limit (Phase 6; the unique index already makes a double clock-in impossible) and the Realtime broadcast (Phase 4, with the live board).
+- Day totals come from the pure calculator in `src/features/attendance/services/attendanceCalculator.ts` (business-rules §4): the dashboard's week and the Timesheet (`/o/[orgSlug]/timesheet?month=YYYY-MM`) both use it.
+
 ### 6.5 Monthly report
 
 1. Admin opens `/o/acme/reports?month=2026-11`.
@@ -250,6 +259,8 @@ Member submits → insert (RLS forces `user_id = me` and `status = 'pending'`; a
 ### 6.7 Forgotten clock-out
 
 Every 15 minutes, `pg_cron` closes entries that are still open long after the shift ended. They get `auto_closed = true` and appear in the admins' **Needs review** queue. See [business-rules.md §6](business-rules.md#6-forgotten-clock-out).
+
+Built in Phase 3 as `private.close_stale_entries()` (job `auto-close-stale-entries`), which also writes an `audit_log` row per session. The member sees a notice on the dashboard until they clock in again; the Needs review queue arrives with the admin pages in Phase 4.
 
 ---
 

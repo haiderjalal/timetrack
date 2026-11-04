@@ -1,10 +1,12 @@
 import { after } from "next/server";
+import { Suspense } from "react";
 
 import { UserMenu } from "@/components/layout/UserMenu";
 import { LogoMark } from "@/components/shared/LogoMark";
 import { rememberLastOrganization } from "@/features/organizations/repositories/organizationRepository";
 import { requireMembership } from "@/features/organizations/services/membership";
 import { ROLE_LABELS } from "@/features/organizations/utils/roles";
+import { CurrentClockChip } from "@/features/time-tracking/components/CurrentClockChip";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatCalendarDate } from "@/lib/time/formatDate";
 import { getZonedNow } from "@/lib/time/zonedNow";
@@ -68,6 +70,14 @@ export async function OrganizationTopBar({ params }: ShellPartProps) {
           {formatCalendarDate(today.isoDate)}
         </time>
       </p>
+      <Suspense fallback={null}>
+        <CurrentClockChip
+          orgId={membership.organization.id}
+          orgSlug={membership.organization.slug}
+          userId={user.id}
+          timeZone={membership.organization.timezone}
+        />
+      </Suspense>
       <UserMenu
         name={user.name}
         email={user.email}

@@ -1,7 +1,7 @@
 # TimeTrack: Business Rules
 
 > Status: **Draft v0.3.** Items marked **[ASSUMPTION]** are proposed defaults that need product-owner confirmation (see §10). Marked **[CONFIRMED]**: confirmed by the product owner on 2026-11-03 (§1 roles, §8 default working hours, Q1, Q2 per-day overtime, Q3, Q6, Q8, Q10).
-> These rules are implemented in pure TypeScript (`features/attendance/services/attendance-calculator.ts`) and covered by unit tests. Postgres only enforces the hard invariants listed in [database.md](database.md).
+> These rules are implemented in pure TypeScript (`src/features/attendance/services/attendanceCalculator.ts`) and covered by unit tests. Postgres only enforces the hard invariants listed in [database.md](database.md).
 
 ---
 
@@ -93,6 +93,18 @@ All overtime minutes count. No rounding, no minimum threshold. Durations are sho
 | Wed | –                                      |      0 | absent   |        – |        8h |    –    |
 | Thu | half-day leave (1st half), 13:30–18:00 | 4h 30m | complete |      30m |         – |   no    |
 | Sat | 10:00–13:00                            |     3h | day_off  |   **3h** |         – |    –    |
+
+### As built (Phase 3)
+
+- `summarizeDay()` implements the formulas and statuses above, except `holiday` and `on_leave`, which
+  arrive with holidays (Phase 4) and leave (Phase 5). The worked examples in the table are its unit
+  tests (Thursday's half-day leave waits for Phase 5).
+- **In progress** also covers a day whose shift hasn't ended yet or that still has an open session, so
+  a night shift (22:00–06:00) stays "in progress" after midnight instead of turning absent.
+- Worked time is counted in whole seconds and shown in whole minutes, without rounding up, which
+  matches the proposed "no rounding" default above (still to be confirmed).
+- Shortfall is only counted once a day is final; a day in progress shows time to go instead.
+- Period totals (the dashboard's week, the Timesheet month) leave out days still to come.
 
 ## 5. Leave
 

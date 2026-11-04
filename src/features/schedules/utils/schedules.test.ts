@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getDefaultSchedule } from "../constants/defaultSchedule";
-import { formatShiftRange, getLateAfter } from "./shift";
+import { formatShiftRange, getLateAfter, getScheduledDay } from "./shift";
 import { toScheduleParams } from "./toScheduleParams";
 
 import type { ScheduleDay } from "../types/schedule";
@@ -92,6 +92,35 @@ describe("formatShiftRange", () => {
         day({ isWorkingDay: false, startTime: null, endTime: null }),
       ),
     ).toBeNull();
+  });
+});
+
+describe("getScheduledDay", () => {
+  const versions = [
+    {
+      effectiveFrom: "2026-11-01",
+      graceMinutes: 15,
+      days: [day({ weekday: 1 })],
+    },
+    {
+      effectiveFrom: "2026-12-01",
+      graceMinutes: 5,
+      days: [day({ weekday: 1, startTime: "08:00" })],
+    },
+  ];
+
+  it("uses the newest version that started on or before the date", () => {
+    expect(getScheduledDay(versions, "2026-11-30", 1)).toEqual({
+      day: day({ weekday: 1 }),
+      graceMinutes: 15,
+    });
+    expect(getScheduledDay(versions, "2026-12-07", 1)?.day.startTime).toBe(
+      "08:00",
+    );
+  });
+
+  it("has no rule before the first version", () => {
+    expect(getScheduledDay(versions, "2026-10-26", 1)).toBeNull();
   });
 });
 

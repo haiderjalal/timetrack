@@ -3,6 +3,16 @@ export function formatTimeValue(time: string): string {
   return time.slice(0, 5);
 }
 
+/** An instant as the 24-hour clock time in a timezone: `"09:02"`. */
+export function formatTimeInZone(isoInstant: string, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(isoInstant));
+}
+
 /** `"2026-11-03"` → `"Tue, 3 Nov"`. The date is a calendar day, not an instant. */
 export function formatCalendarDate(isoDate: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", {

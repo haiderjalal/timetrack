@@ -12,8 +12,8 @@ export type Database = {
       audit_log: {
         Row: {
           action: string;
-          after: Json | null;
           actor_id: string | null;
+          after: Json | null;
           before: Json | null;
           created_at: string;
           entity_id: string | null;
@@ -24,8 +24,8 @@ export type Database = {
         };
         Insert: {
           action: string;
-          after?: Json | null;
           actor_id?: string | null;
+          after?: Json | null;
           before?: Json | null;
           created_at?: string;
           entity_id?: string | null;
@@ -36,8 +36,8 @@ export type Database = {
         };
         Update: {
           action?: string;
-          after?: Json | null;
           actor_id?: string | null;
+          after?: Json | null;
           before?: Json | null;
           created_at?: string;
           entity_id?: string | null;
@@ -56,70 +56,6 @@ export type Database = {
           },
           {
             foreignKeyName: "audit_log_org_id_fkey";
-            columns: ["org_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      invitations: {
-        Row: {
-          accepted_at: string | null;
-          accepted_by: string | null;
-          created_at: string;
-          email: string;
-          expires_at: string;
-          id: string;
-          invited_by: string;
-          org_id: string;
-          revoked_at: string | null;
-          role: Database["public"]["Enums"]["member_role"];
-          token_hash: string;
-        };
-        Insert: {
-          accepted_at?: string | null;
-          accepted_by?: string | null;
-          created_at?: string;
-          email: string;
-          expires_at?: string;
-          id?: string;
-          invited_by: string;
-          org_id: string;
-          revoked_at?: string | null;
-          role?: Database["public"]["Enums"]["member_role"];
-          token_hash: string;
-        };
-        Update: {
-          accepted_at?: string | null;
-          accepted_by?: string | null;
-          created_at?: string;
-          email?: string;
-          expires_at?: string;
-          id?: string;
-          invited_by?: string;
-          org_id?: string;
-          revoked_at?: string | null;
-          role?: Database["public"]["Enums"]["member_role"];
-          token_hash?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "invitations_accepted_by_fkey";
-            columns: ["accepted_by"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "invitations_invited_by_fkey";
-            columns: ["invited_by"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "invitations_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
@@ -307,6 +243,59 @@ export type Database = {
           },
         ];
       };
+      time_entries: {
+        Row: {
+          auto_closed: boolean;
+          clock_in_at: string;
+          clock_in_source: Database["public"]["Enums"]["entry_source"];
+          clock_out_at: string | null;
+          clock_out_source: Database["public"]["Enums"]["entry_source"] | null;
+          created_at: string;
+          id: string;
+          note: string | null;
+          org_id: string;
+          updated_at: string;
+          user_id: string;
+          work_date: string;
+        };
+        Insert: {
+          auto_closed?: boolean;
+          clock_in_at?: string;
+          clock_in_source?: Database["public"]["Enums"]["entry_source"];
+          clock_out_at?: string | null;
+          clock_out_source?: Database["public"]["Enums"]["entry_source"] | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          org_id: string;
+          updated_at?: string;
+          user_id: string;
+          work_date: string;
+        };
+        Update: {
+          auto_closed?: boolean;
+          clock_in_at?: string;
+          clock_in_source?: Database["public"]["Enums"]["entry_source"];
+          clock_out_at?: string | null;
+          clock_out_source?: Database["public"]["Enums"]["entry_source"] | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          org_id?: string;
+          updated_at?: string;
+          user_id?: string;
+          work_date?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_org_id_user_id_fkey";
+            columns: ["org_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "organization_members";
+            referencedColumns: ["org_id", "user_id"];
+          },
+        ];
+      };
       work_schedule_days: {
         Row: {
           end_time: string | null;
@@ -389,58 +378,45 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      accept_invitation: {
-        Args: { p_token: string };
-        Returns: {
-          created_at: string;
-          created_by: string;
-          deleted_at: string | null;
-          id: string;
-          name: string;
-          slug: string;
-          timezone: string;
-          updated_at: string;
-          week_starts_on: number;
-        };
-      };
-      change_member_role: {
+      clock_in: {
         Args: {
           p_org_id: string;
-          p_role: Database["public"]["Enums"]["member_role"];
-          p_user_id: string;
+          p_source?: Database["public"]["Enums"]["entry_source"];
         };
         Returns: {
+          auto_closed: boolean;
+          clock_in_at: string;
+          clock_in_source: Database["public"]["Enums"]["entry_source"];
+          clock_out_at: string | null;
+          clock_out_source: Database["public"]["Enums"]["entry_source"] | null;
           created_at: string;
           id: string;
-          job_title: string | null;
-          joined_at: string;
+          note: string | null;
           org_id: string;
-          role: Database["public"]["Enums"]["member_role"];
-          schedule_id: string | null;
-          status: Database["public"]["Enums"]["member_status"];
           updated_at: string;
           user_id: string;
+          work_date: string;
         };
       };
-      create_invitation: {
+      clock_out: {
         Args: {
-          p_email: string;
+          p_note?: string;
           p_org_id: string;
-          p_role: Database["public"]["Enums"]["member_role"];
-          p_token_hash: string;
+          p_source?: Database["public"]["Enums"]["entry_source"];
         };
         Returns: {
-          accepted_at: string | null;
-          accepted_by: string | null;
+          auto_closed: boolean;
+          clock_in_at: string;
+          clock_in_source: Database["public"]["Enums"]["entry_source"];
+          clock_out_at: string | null;
+          clock_out_source: Database["public"]["Enums"]["entry_source"] | null;
           created_at: string;
-          email: string;
-          expires_at: string;
           id: string;
-          invited_by: string;
+          note: string | null;
           org_id: string;
-          revoked_at: string | null;
-          role: Database["public"]["Enums"]["member_role"];
-          token_hash: string;
+          updated_at: string;
+          user_id: string;
+          work_date: string;
         };
       };
       create_organization: {
@@ -492,6 +468,7 @@ export type Database = {
       };
     };
     Enums: {
+      entry_source: "web" | "mobile" | "admin" | "system";
       member_role: "owner" | "admin" | "member";
       member_status: "active" | "deactivated";
     };
@@ -518,6 +495,7 @@ export type Enums<EnumName extends keyof DefaultSchema["Enums"]> =
 export const Constants = {
   public: {
     Enums: {
+      entry_source: ["web", "mobile", "admin", "system"],
       member_role: ["owner", "admin", "member"],
       member_status: ["active", "deactivated"],
     },

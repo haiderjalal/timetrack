@@ -2,7 +2,7 @@
 -- and the private helpers can't be called by anon.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(11);
 
 select is(
   (
@@ -54,6 +54,43 @@ select ok(
 select ok(
   not has_schema_privilege('anon', 'private', 'usage'),
   'anon cannot use the private schema'
+);
+
+select ok(
+  not has_function_privilege('anon', 'public.clock_in(uuid, public.entry_source)', 'execute')
+  and not has_function_privilege('anon', 'public.clock_out(uuid, text, public.entry_source)', 'execute'),
+  'anon cannot clock in or out'
+);
+
+select ok(
+  not has_function_privilege('authenticated', 'private.close_stale_entries(uuid, uuid)', 'execute'),
+  'signed-in users cannot run the auto-close job'
+);
+
+select is(
+  (
+    select count(*)::int
+    from information_schema.role_table_grants
+    where grantee = 'authenticated'
+      and table_schema = 'public'
+      and table_name in ('time_entries', 'audit_log')
+      and privilege_type <> 'SELECT'
+  ),
+  0,
+  'signed-in users can only read sessions and the audit log'
+);
+
+select is(
+  (
+    select count(*)::int
+    from information_schema.column_privileges
+    where grantee = 'authenticated'
+      and table_schema = 'public'
+      and table_name in ('time_entries', 'audit_log')
+      and privilege_type <> 'SELECT'
+  ),
+  0,
+  'and have no column-level write grants on them either'
 );
 
 select * from finish();
