@@ -50,7 +50,7 @@ reset role;
 create table tests.org_ids as select slug::text as slug, id from public.organizations;
 grant select on tests.org_ids to authenticated;
 
--- Until invitations exist (Phase 2), add org A's admin and member directly.
+-- Fixtures: org A's admin and member join directly; the invitation flow is tested in 04.
 insert into public.organization_members (org_id, user_id, role)
 select o.id, u.user_id, u.role::public.member_role
 from tests.org_ids o
