@@ -51,6 +51,7 @@ describe("getNavGroups", () => {
   it("only links pages that exist today", () => {
     expect(getNavGroups("owner").flatMap((group) => group.items)).toEqual([
       "dashboard",
+      "timesheet",
     ]);
   });
 });
@@ -63,16 +64,23 @@ describe("SidebarNav", () => {
     expect(link).toHaveAttribute("href", "/o/acme/dashboard");
     expect(link).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { name: "Me" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Timesheet" })).toHaveAttribute(
+      "href",
+      "/o/acme/timesheet",
+    );
   });
 });
 
 describe("MobileTabBar", () => {
-  it("uses the short tab label", () => {
-    render(<MobileTabBar orgSlug="acme" items={["dashboard"]} />);
+  it("uses the short tab labels", () => {
+    render(<MobileTabBar orgSlug="acme" items={["dashboard", "timesheet"]} />);
 
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute(
       "aria-current",
       "page",
+    );
+    expect(screen.getByRole("link", { name: "Time" })).not.toHaveAttribute(
+      "aria-current",
     );
   });
 });

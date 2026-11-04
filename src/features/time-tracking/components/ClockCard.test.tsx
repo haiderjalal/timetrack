@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { clockIn, clockOut } from "../actions/clock";
@@ -75,8 +81,10 @@ describe("ClockCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clock in" }));
 
     expect(clockInMock).toHaveBeenCalledWith({ orgSlug: "acme" });
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "Clocked in at 14:00.",
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Clocked in at 14:00.",
+      ),
     );
   });
 
@@ -120,8 +128,10 @@ describe("ClockCard", () => {
       orgSlug: "acme",
       note: "Client visit",
     });
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "Clocked out at 18:00.",
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Clocked out at 18:00.",
+      ),
     );
   });
 

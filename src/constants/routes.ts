@@ -14,3 +14,9 @@ export const ROUTES = {
 export function orgDashboardPath(orgSlug: string): Route {
   return `/o/${encodeURIComponent(orgSlug)}/dashboard` as Route;
 }
+
+/** The person's own timesheet in one org, optionally for a month (`YYYY-MM`). */
+export function orgTimesheetPath(orgSlug: string, month?: string): Route {
+  const path = `/o/${encodeURIComponent(orgSlug)}/timesheet`;
+  return (month ? `${path}?month=${month}` : path) as Route;
+}
