@@ -52,7 +52,14 @@ describe("getNavGroups", () => {
     expect(getNavGroups("owner").flatMap((group) => group.items)).toEqual([
       "dashboard",
       "timesheet",
+      "team",
     ]);
+  });
+
+  it("keeps the team page out of members' navigation", () => {
+    expect(
+      getNavGroups("member").flatMap((group) => group.items),
+    ).not.toContain("team");
   });
 });
 
