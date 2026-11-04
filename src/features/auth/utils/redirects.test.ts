@@ -31,29 +31,40 @@ describe("getSafeRedirectPath", () => {
     ["missing value", null],
     ["non-string value", 42],
   ])("rejects a %s", (_label, input) => {
-    expect(getSafeRedirectPath(input)).toBe("/account");
+    expect(getSafeRedirectPath(input)).toBe("/dashboard");
   });
 
   it("never sends people back to the login page or the OAuth callback", () => {
-    expect(getSafeRedirectPath("/login?next=/login")).toBe("/account");
-    expect(getSafeRedirectPath("/auth/callback?code=x")).toBe("/account");
+    expect(getSafeRedirectPath("/login?next=/login")).toBe("/dashboard");
+    expect(getSafeRedirectPath("/auth/callback?code=x")).toBe("/dashboard");
+  });
+
+  it("falls back to the landing resolver, which picks the org", () => {
+    expect(getSafeRedirectPath(undefined)).toBe("/dashboard");
   });
 });
 
 describe("isProtectedPath", () => {
-  it.each(["/account", "/onboarding", "/o/acme", "/o/acme/reports"])(
-    "protects %s",
-    (path) => {
-      expect(isProtectedPath(path)).toBe(true);
-    },
-  );
+  it.each([
+    "/account",
+    "/dashboard",
+    "/onboarding",
+    "/o/acme",
+    "/o/acme/reports",
+  ])("protects %s", (path) => {
+    expect(isProtectedPath(path)).toBe(true);
+  });
 
-  it.each(["/", "/login", "/auth/callback", "/organic", "/accounts"])(
-    "leaves %s public",
-    (path) => {
-      expect(isProtectedPath(path)).toBe(false);
-    },
-  );
+  it.each([
+    "/",
+    "/login",
+    "/auth/callback",
+    "/organic",
+    "/accounts",
+    "/dashboards",
+  ])("leaves %s public", (path) => {
+    expect(isProtectedPath(path)).toBe(false);
+  });
 });
 
 describe("getAuthErrorMessage", () => {

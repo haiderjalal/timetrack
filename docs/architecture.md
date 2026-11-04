@@ -147,6 +147,7 @@ timetrack/
 │   │   ├── (marketing)/page.tsx           static landing page
 │   │   ├── (auth)/login/page.tsx          "Continue with Google"
 │   │   ├── auth/callback/route.ts         OAuth code exchange
+│   │   ├── dashboard/route.ts             after sign-in: last org's dashboard, or onboarding
 │   │   ├── onboarding/                    create-org wizard
 │   │   ├── invite/[token]/                accept invitation
 │   │   ├── o/[orgSlug]/                   authenticated app (AppShell layout)
@@ -165,21 +166,25 @@ timetrack/
 │   │       ├── reports/export/route.ts    CSV stream
 │   │       └── health/route.ts
 │   ├── features/
-│   │   ├── organizations/   { actions, services, repositories, validation, components, types }
+│   │   ├── auth/            sign-in, sign-out, getCurrentUser() / requireUser()
+│   │   ├── organizations/   { actions, services, repositories, components, types, utils }, requireMembership()
+│   │   ├── app-shell/       org layout parts: sidebar, top bar, org switcher, mobile tabs, nav config
+│   │   ├── dashboard/
 │   │   ├── members/
 │   │   ├── invitations/
-│   │   ├── schedules/
-│   │   ├── time-tracking/
-│   │   ├── attendance/      AttendanceCalculator (pure), live board
+│   │   ├── schedules/       working-hours versions, the rule for any date
+│   │   ├── time-tracking/   clock actions, ClockCard, SessionList, top-bar timer, useLiveNow
+│   │   ├── attendance/      AttendanceCalculator (pure), Timesheet calendar; later the live board
 │   │   ├── leave/
 │   │   └── reports/
 │   ├── components/
 │   │   ├── ui/              shadcn primitives
-│   │   ├── layout/          AppShell, Sidebar, Topbar, MobileTabBar, OrgSwitcher
+│   │   ├── layout/          marketing header/footer, UserMenu
+│   │   ├── forms/           FieldError
 │   │   └── shared/          EmptyState, ErrorState, DurationText, StatusBadge, PageHeader
 │   ├── lib/
 │   │   ├── supabase/        server.ts · client.ts · admin.ts (server-only, cron/maintenance only)
-│   │   ├── auth/            getCurrentUser(), requireMembership(orgSlug, roles?)
+│   │   ├── validations/     Zod schemas shared by forms and Server Actions
 │   │   ├── email/           Resend client + React Email templates
 │   │   ├── rate-limit.ts
 │   │   ├── logger.ts
@@ -202,16 +207,19 @@ timetrack/
 1. `/login` → Server Action `signInWithGoogle` → `signInWithOAuth({ provider: 'google', redirectTo: <site>/auth/callback })` with PKCE. The page to return to (`next`) is sanitized by `getSafeRedirectPath` and kept in a 10-minute httpOnly `tt_next` cookie scoped to `/auth/callback`. Keeping it out of the URL means the redirect URL allow-listed in Supabase stays exact.
 2. Google → Supabase → `/auth/callback` → `exchangeCodeForSession(code)` → session cookies set (`httpOnly`, `SameSite=Lax`, `Secure` in production). A cancelled consent or a bad code goes back to `/login?error=…` with a friendly message. The callback response is `Cache-Control: private, no-store`.
 3. `proxy.ts` refreshes the session on every page request, skipping Supabase entirely when there is no auth cookie. Its routing is optimistic: signed-out users on protected paths (`/account`, `/onboarding`, `/o/*`) are sent to `/login?next=…`, and verified users opening `/login` go straight to their destination. Pages, Server Actions and Route Handlers still verify with `requireUser()` (JWT signature checked by `getClaims()`).
-4. Today a signed-in user lands on `/account` (profile + sign out).
-
-**Next** (onboarding): a DB trigger on `auth.users` creates the `public.profiles` row. Post-sign-in routing then becomes: user has orgs → `/o/{lastOrg}/dashboard`; has a pending invite → `/invite/{token}`; otherwise → `/onboarding`.
+4. A DB trigger on `auth.users` creates the `public.profiles` row from the Google profile.
+5. With no explicit `next`, sign-in lands on `/dashboard`, a Route Handler that resolves the destination: the org in `profiles.last_org_id` if the person is still an active member, else the first org they joined, else `/onboarding`. If the lookup fails it falls back to `/account`, which works without org data. An explicit, safe `next` (a deep link) still wins. Visiting any page in an org saves it as `last_org_id` (in `after()`, so it never slows the page). Phase 2 adds: has a pending invite → `/invite/{token}`.
 
 Supabase setup this needs: Google provider enabled; `<site>/auth/callback` in **Authentication → URL Configuration → Redirect URLs** for every environment; email sign-up disabled (TimeTrack is Google-only).
 
-### 6.2 Create an organization (onboarding wizard)
+### 6.2 Create an organization (onboarding)
 
-Name → timezone (detected from the browser, editable) → working hours (default Mon–Fri 09:00–18:00, 8h required, 15 min grace) → invite team (optional, skippable).
-A single RPC, `create_organization()`, creates the org, the owner membership, the first schedule version and the default leave types **in one transaction**.
+**Built** (`/onboarding`, `src/features/organizations`): one page with the name, web address (slug, suggested from the name), timezone (detected from the browser, editable) and working hours (default Mon–Fri 09:00–18:00, 8h required, 15 min grace). React Hook Form validates with the same Zod schema (`src/lib/validations/organization.schema.ts`) that the `createOrganization` Server Action runs again on the server, after `requireUser()`.
+A single RPC, `create_organization()`, creates the org, the owner membership, the first schedule version and the default leave types **in one transaction**, then the action opens `/o/{slug}/dashboard`. Phase 2 adds an optional "invite your team" step.
+
+### 6.2.1 Pages inside an org
+
+`/o/[orgSlug]/layout.tsx` is the app shell. Its frame is static; the sidebar, top bar and tabs stream in, and each calls `requireMembership(orgSlug)` (`src/features/organizations/services/membership.ts`): a verified user who is an active member of that org, or a 404, so slugs can't be probed. It is cached per request, so the layout and page share one membership query. Every page, Server Action and Route Handler under `/o/[orgSlug]` calls it too.
 
 ### 6.3 Invite a teammate
 
@@ -227,6 +235,15 @@ A single RPC, `create_organization()`, creates the org, the owner membership, th
 4. A trigger broadcasts the change to the org's Realtime channel, and the admin live board updates instantly.
 5. The UI updates immediately with `useOptimistic` and rolls back if the action fails.
 
+**As built (Phase 3, `feature/time-tracking`):**
+
+- `ClockCard` (client) → `clockIn` / `clockOut` Server Actions (`src/features/time-tracking/actions/clock.ts`): parse the shared schema (`src/lib/validations/clock.schema.ts`), `requireMembership()`, call the RPC, then `refresh()` so the whole page (card, sessions, week, top-bar timer) re-renders from the server. Refusals (`already_clocked_in`, `not_clocked_in`, …) map to plain messages in `utils/clockErrors.ts`; the page refreshes on those too, so a second tab shows the real state. The card shows a pending state while the action runs instead of an optimistic one: the server's answer arrives in one round trip.
+- `clock_in` / `clock_out` first close the caller's own **stale** session with the auto-close rule (§6.7), so a missed job run never blocks anyone. Clocking out a stale session returns it with `auto_closed = true`, and the card says so.
+- **Live timers** (`hooks/useLiveNow.ts`) start from the server's `Date.now()` at render and add the seconds that pass on the device, through one shared one-second ticker. A wrong device clock never skews them, and server render and hydration show the same value. Screen readers hear state changes once, never the ticking timer.
+- The note at clock-out is a single optional field with `maxLength`, validated by the shared Zod schema in the action, without React Hook Form: one field doesn't justify ~10 KB on the dashboard.
+- **Not yet:** the Upstash rate limit (Phase 6; the unique index already makes a double clock-in impossible) and the Realtime broadcast (Phase 4, with the live board).
+- Day totals come from the pure calculator in `src/features/attendance/services/attendanceCalculator.ts` (business-rules §4): the dashboard's week and the Timesheet (`/o/[orgSlug]/timesheet?month=YYYY-MM`) both use it.
+
 ### 6.5 Monthly report
 
 1. Admin opens `/o/acme/reports?month=2026-11`.
@@ -241,6 +258,8 @@ Member submits → insert (RLS forces `user_id = me` and `status = 'pending'`; a
 ### 6.7 Forgotten clock-out
 
 Every 15 minutes, `pg_cron` closes entries that are still open long after the shift ended. They get `auto_closed = true` and appear in the admins' **Needs review** queue. See [business-rules.md §6](business-rules.md#6-forgotten-clock-out).
+
+Built in Phase 3 as `private.close_stale_entries()` (job `auto-close-stale-entries`), which also writes an `audit_log` row per session. The member sees a notice on the dashboard until they clock in again; the Needs review queue arrives with the admin pages in Phase 4.
 
 ---
 

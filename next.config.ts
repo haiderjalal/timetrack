@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   // Static shell + streamed dynamic data (docs/architecture.md §7).
   cacheComponents: true,
   partialPrefetching: true,
+  // Links and redirects to routes that don't exist fail the type check.
+  typedRoutes: true,
   poweredByHeader: false,
   images: {
     // Google profile photos only; must match toCurrentUser's avatar host check.

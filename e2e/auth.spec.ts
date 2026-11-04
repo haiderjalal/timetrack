@@ -35,6 +35,8 @@ test.describe("sign-in page", () => {
   });
 
   test("has no accessibility violations", async ({ page }) => {
+    // Settled page: the brand panel's ring fill shouldn't be mid-animation.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/login?error=callback");
     await expect(pageAlert(page)).toBeVisible();
 
@@ -49,7 +51,10 @@ test.describe("sign-in page", () => {
   }) => {
     for (const next of ["//evil.example", "https://evil.example", "/\\evil"]) {
       await page.goto(`/login?next=${encodeURIComponent(next)}`);
-      await expect(page.locator('input[name="next"]')).toHaveValue("/account");
+      // The default sends people to their last org's dashboard, or onboarding.
+      await expect(page.locator('input[name="next"]')).toHaveValue(
+        "/dashboard",
+      );
     }
 
     await page.goto(`/login?next=${encodeURIComponent("/o/acme/reports")}`);
@@ -69,7 +74,12 @@ test.describe("sign-in page", () => {
 });
 
 test.describe("protected pages", () => {
-  for (const path of ["/account", "/o/acme/dashboard"]) {
+  for (const path of [
+    "/account",
+    "/dashboard",
+    "/onboarding",
+    "/o/acme/dashboard",
+  ]) {
     test(`send signed-out visitors from ${path} to sign-in`, async ({
       page,
     }) => {

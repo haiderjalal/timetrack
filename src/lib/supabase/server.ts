@@ -6,15 +6,20 @@ import { createServerClient } from "@supabase/ssr";
 import { AUTH_COOKIE_OPTIONS } from "./cookies";
 import { getSupabaseEnv } from "./env";
 
+import type { Database } from "@/types/database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+export type TypedSupabaseClient = SupabaseClient<Database>;
+
 /**
  * Supabase client for Server Components, Server Actions and Route Handlers.
  * Create one per request; never share it between requests.
  */
-export async function createSupabaseServerClient() {
+export async function createSupabaseServerClient(): Promise<TypedSupabaseClient> {
   const { url, publishableKey } = getSupabaseEnv();
   const cookieStore = await cookies();
 
-  return createServerClient(url, publishableKey, {
+  return createServerClient<Database>(url, publishableKey, {
     cookieOptions: AUTH_COOKIE_OPTIONS,
     cookies: {
       getAll() {

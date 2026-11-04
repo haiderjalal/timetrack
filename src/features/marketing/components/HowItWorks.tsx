@@ -1,3 +1,5 @@
+import { SectionHeading } from "./SectionHeading";
+
 const STEPS = [
   {
     title: "Sign in with Google",
@@ -19,32 +21,41 @@ export function HowItWorks() {
     <section
       id="how-it-works"
       aria-labelledby="how-title"
-      className="mx-auto flex w-full max-w-6xl scroll-mt-8 flex-col gap-10 px-4 py-16 sm:px-6 lg:px-8"
+      className="scroll-mt-20 border-t bg-background"
     >
-      <h2 id="how-title" className="text-2xl font-semibold tracking-tight">
-        Up and running in three steps
-      </h2>
-      <ol className="grid gap-6 md:grid-cols-3">
-        {STEPS.map((step, index) => (
-          <li
-            key={step.title}
-            className="flex gap-4 rounded-xl border bg-card p-5"
-          >
-            <span
-              aria-hidden="true"
-              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground tabular"
-            >
-              {index + 1}
-            </span>
-            <div className="flex flex-col gap-1">
-              <h3 className="font-semibold">{step.title}</h3>
-              <p className="text-sm text-muted-foreground">
-                {step.description}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 py-20 sm:px-6 lg:px-8">
+        <SectionHeading
+          id="how-title"
+          eyebrow="How it works"
+          title="Up and running in three steps"
+        />
+        <div className="relative">
+          {/* Connector behind the step numbers; draws in as you scroll. */}
+          <div
+            aria-hidden="true"
+            className="absolute top-5 right-[16%] left-[16%] hidden h-px reveal-line bg-brand/30 md:block"
+          />
+          <ol className="relative grid gap-8 md:grid-cols-3">
+            {STEPS.map((step, index) => (
+              <li
+                key={step.title}
+                className="flex reveal flex-col items-start gap-3 md:items-center md:text-center"
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex size-10 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground tabular ring-8 ring-background"
+                >
+                  {index + 1}
+                </span>
+                <h3 className="font-semibold">{step.title}</h3>
+                <p className="max-w-xs text-sm text-muted-foreground">
+                  {step.description}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
     </section>
   );
 }

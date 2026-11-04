@@ -1,7 +1,9 @@
 import { SITE_DESCRIPTION, SITE_NAME } from "@/constants/site";
+import { CtaBand } from "@/features/marketing/components/CtaBand";
 import { FeatureGrid } from "@/features/marketing/components/FeatureGrid";
 import { HeroSection } from "@/features/marketing/components/HeroSection";
 import { HowItWorks } from "@/features/marketing/components/HowItWorks";
+import { ProductTour } from "@/features/marketing/components/ProductTour";
 import { getSiteUrl } from "@/lib/getSiteUrl";
 
 import type { Metadata } from "next";
@@ -32,7 +34,9 @@ export default function HomePage() {
       />
       <HeroSection />
       <FeatureGrid />
+      <ProductTour />
       <HowItWorks />
+      <CtaBand />
     </>
   );
 }

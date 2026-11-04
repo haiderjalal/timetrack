@@ -7,6 +7,7 @@ import {
 } from "../constants/auth";
 
 import type { AuthErrorCode } from "../constants/auth";
+import type { Route } from "next";
 
 // Any origin works: it only has to be one an attacker can't make us leave.
 const PLACEHOLDER_ORIGIN = "http://placeholder.invalid";
@@ -59,7 +60,7 @@ export function getAuthErrorMessage(code: unknown): string | null {
 export function getLoginPath(options: {
   next?: string;
   error?: AuthErrorCode;
-}): string {
+}): Route {
   const params = new URLSearchParams();
   if (options.next) params.set("next", options.next);
   if (options.error) params.set("error", options.error);

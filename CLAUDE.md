@@ -60,7 +60,14 @@ All of `lint`, `format:check`, `typecheck`, `test`, `test:e2e` and `build` must 
   `TriangleAlert` not `AlertTriangle`).
 - **Links that look like buttons** use `<Link className={buttonVariants(...)}>` from
   `@/components/ui/button-variants`, not `<Button asChild>` (that ships Radix Slot to the browser).
-  The root `error.tsx` and `EmptyState` must not import `cn`: they ship with every page.
+  Code that runs in the browser on public pages (root `error.tsx`, `EmptyState`, `ProgressRing`,
+  `TabSwitcher`, `ClockDemo`, `StatusBadge`, `LogoMark`) must not import `cn` (~10 KB): join
+  non-conflicting classes by hand, and never pass a `className` to `buttonVariants` that fights
+  its own classes (e.g. `hidden` vs `inline-flex`): wrap the element instead.
+- **Motion:** every animation opts in under `prefers-reduced-motion: no-preference` (or
+  `motion-safe:`); never add a global "animation-duration: 0.01ms" override. Use the utilities in
+  `globals.css` (`animate-enter`, `reveal`, `reveal-line`, `animate-grow-x`, `live-dot`). Never
+  animate the hero `<h1>` (the LCP element), and scroll reveals move content without fading it.
 - **Imports:** React/Next → third-party → `@/` aliases → relative → `import type` → styles.
 - **Auth:** read the user with `getCurrentUser()` / `requireUser()` from
   `@/features/auth/services/currentUser` (verifies the JWT via `getClaims()`); never `getSession()`
@@ -68,8 +75,25 @@ All of `lint`, `format:check`, `typecheck`, `test`, `test:e2e` and `build` must 
   Route Handler calls `requireUser()` itself. Redirect targets from users go through
   `getSafeRedirectPath()`. Session cookies stay `httpOnly`; don't add a browser Supabase client
   that needs to read them.
+- **Org pages:** every page, layout part, Server Action and Route Handler under `/o/[orgSlug]` calls
+  `requireMembership(orgSlug)` from `@/features/organizations/services/membership` (verified user +
+  active membership, else 404). It's cached per request, so calling it again is free. Only link to
+  pages that exist: add a page to `src/features/app-shell/constants/navigation.ts` when it ships.
+- **Typed routes** (`typedRoutes: true`): links and `redirect()` are checked against real routes.
+  Build org URLs with `orgDashboardPath()` from `@/constants/routes` instead of string templates.
+- **Forms:** React Hook Form + Zod. Schemas live in `src/lib/validations` and the Server Action
+  parses the same schema again. Server-side failures come back as `ApiFailure` with field paths.
 - **Members never send timestamps.** Clock times come from Postgres `now()` via RPC.
-- **Supabase:** `auto_expose_new_tables = false`, so every migration writes its own grants and RLS
-  policies, and every policy gets a pgTAP test in `supabase/tests/`.
+- **Live timers** use `useLiveNow(serverNow, isRunning)` from
+  `@/features/time-tracking/hooks/useLiveNow` (one shared ticker, immune to a wrong device clock).
+  `serverNow` is read in a service, not a component (`react-hooks/purity` forbids `Date.now()` in
+  render). Timers are `aria-hidden`; announce state changes once in a `role="status"` region.
+- **Attendance math** lives only in `src/features/attendance/services/attendanceCalculator.ts`
+  (pure, unit-tested against business-rules.md §4). Pages and services pass it sessions and the
+  schedule version for each date (`getScheduledDay`); never recompute overtime elsewhere.
+- **Supabase:** `auto_expose_new_tables = false`, so every migration revokes and then writes its
+  own grants and RLS policies, and every policy gets a pgTAP test in `supabase/tests/database/`.
+  After a migration, regenerate `src/types/database.types.ts`. Repositories select named columns
+  (never `*`) and turn Postgres errors into `DataAccessError` / friendly messages.
 - **Git:** `main` is protected; work on `feature/*`, `fix/*`, `chore/*` branches with Conventional
   Commits, and merge through squash-merged PRs.

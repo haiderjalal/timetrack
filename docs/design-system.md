@@ -9,8 +9,9 @@
 1. **The clock is the hero.** A member's main job is to clock in and out. It must take one tap on every screen size, with clear feedback.
 2. **Color is reserved for meaning.** The interface chrome is neutral ink and gray. Color only appears for status (present, short, absent, leave, overtime) and the live indicator. Status is **never** shown by color alone; there is always a label or icon too.
 3. **Numbers are first-class.** All times and durations use tabular figures, right-aligned in tables, in one consistent format (`7h 42m`, `09:05`).
-4. **Calm and trustworthy.** Borders instead of heavy shadows, generous spacing, no decorative motion. This is a tool people open twice a day, every day.
+4. **Calm in the app, alive on the landing page.** Inside the app: borders instead of heavy shadows, generous spacing, no decorative motion. This is a tool people open twice a day, every day. Marketing pages may use **purposeful brand motion**: the interactive hero clock, gentle scroll reveals, a sticky header. All of it is pure CSS where possible, and it never delays the main heading (the LCP element).
 5. **Same rules for everyone.** Members see exactly the numbers their admin sees about them.
+6. **One brand mark.** The logo is an indigo tile holding a ¾ progress arc and a clock hand, echoing the ring members see when they clock in. It looks the same in light and dark mode (`--brand-mark`) and appears in the header, favicon, share image, sign-in panel and CTA band.
 
 ---
 
@@ -20,19 +21,23 @@ Defined as CSS variables in `src/app/globals.css` and mapped to Tailwind v4 with
 
 ### 2.1 Color: neutrals and brand
 
-| Token                  | Light     | Dark      | Use                                        |
-| ---------------------- | --------- | --------- | ------------------------------------------ |
-| `--background`         | `#FFFFFF` | `#09090B` | Cards, inputs                              |
-| `--canvas`             | `#FAFAFA` | `#0C0C0E` | App background behind cards                |
-| `--foreground`         | `#18181B` | `#FAFAFA` | Primary text                               |
-| `--muted`              | `#F4F4F5` | `#27272A` | Subtle fills, table header                 |
-| `--muted-foreground`   | `#71717A` | `#A1A1AA` | Secondary text (AA on both themes)         |
-| `--border`             | `#E4E4E7` | `#27272A` | Dividers, card borders                     |
-| `--primary`            | `#18181B` | `#FAFAFA` | Primary buttons ("ink")                    |
-| `--primary-foreground` | `#FAFAFA` | `#18181B` | Text on primary                            |
-| `--brand`              | `#4F46E5` | `#818CF8` | Logo, links, focus ring, active nav marker |
-| `--ring`               | `#4F46E5` | `#818CF8` | Focus outline                              |
-| `--destructive`        | `#E11D48` | `#FB7185` | Destructive actions                        |
+| Token                     | Light     | Dark            | Use                                                                                                  |
+| ------------------------- | --------- | --------------- | ---------------------------------------------------------------------------------------------------- |
+| `--background`            | `#FFFFFF` | `#09090B`       | Cards, inputs                                                                                        |
+| `--canvas`                | `#FAFAFA` | `#0C0C0E`       | App background behind cards                                                                          |
+| `--foreground`            | `#18181B` | `#FAFAFA`       | Primary text                                                                                         |
+| `--muted`                 | `#F4F4F5` | `#27272A`       | Subtle fills, table header                                                                           |
+| `--muted-foreground`      | `#6B6B74` | `#A1A1AA`       | Secondary text: AA on white, canvas **and** muted surfaces (`#71717A` failed on `--muted` at 4.39:1) |
+| `--border`                | `#E4E4E7` | `#27272A`       | Dividers, card borders                                                                               |
+| `--primary`               | `#18181B` | `#FAFAFA`       | Primary buttons ("ink")                                                                              |
+| `--primary-foreground`    | `#FAFAFA` | `#18181B`       | Text on primary                                                                                      |
+| `--brand`                 | `#4F46E5` | `#818CF8`       | Links, focus ring, active nav marker, highlights                                                     |
+| `--brand-soft`            | `#EEF2FF` | brand 15% on bg | Icon tiles, demo badge                                                                               |
+| `--brand-mark`            | `#4F46E5` | `#4F46E5`       | Logo tile, CTA band, sign-in brand panel (same in both themes)                                       |
+| `--brand-mark-foreground` | `#FFFFFF` | `#FFFFFF`       | Text and strokes on `--brand-mark`                                                                   |
+| `--brand-mark-muted`      | `#E0E7FF` | `#E0E7FF`       | Secondary text on `--brand-mark` (6.3:1)                                                             |
+| `--ring`                  | `#4F46E5` | `#818CF8`       | Focus outline                                                                                        |
+| `--destructive`           | `#E11D48` | `#FB7185`       | Destructive actions                                                                                  |
 
 ### 2.2 Color: attendance status (semantic)
 
@@ -68,16 +73,16 @@ In dark mode, soft backgrounds are the solid color at 15% opacity on `--backgrou
 
 ### 2.4 Spacing, layout, shape, elevation, motion
 
-| Category          | Values                                                                                                                                                                      |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Spacing scale     | 4 px base: 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64                                                                                                                    |
-| Page gutter       | 16 mobile · 24 tablet · 32 desktop                                                                                                                                          |
-| Content max width | 1280 px (reports can go full width)                                                                                                                                         |
-| Radius            | `--radius: 10px` → inputs/buttons 8, cards 12, badges/pills full                                                                                                            |
-| Elevation         | Cards: 1px border + `shadow-xs`. Popovers/menus: `shadow-lg`. Nothing else.                                                                                                 |
-| Motion            | Hover/press 150 ms ease-out · panels/sheets 200 ms · progress ring fills over 600 ms on mount · live dot pulses every 2 s. **All disabled under `prefers-reduced-motion`.** |
-| Touch targets     | ≥ 44 × 44 px on mobile                                                                                                                                                      |
-| Icons             | Lucide, 16 px in text, 20 px in nav, stroke 1.75                                                                                                                            |
+| Category          | Values                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Spacing scale     | 4 px base: 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Page gutter       | 16 mobile · 24 tablet · 32 desktop                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Content max width | 1280 px (reports can go full width)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Radius            | `--radius: 10px` → inputs/buttons 8, cards 12, badges/pills full                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Elevation         | Cards: 1px border + `shadow-xs`. Popovers/menus: `shadow-lg`. Nothing else.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Motion            | Hover/press 150 ms ease-out · panels/sheets 200 ms · progress ring transitions over 600 ms · live dot pulses (1.6 s) · page-load entrance `animate-enter` (600 ms, staggered with `--enter-delay`) · scroll reveals `reveal` / `reveal-line` (scroll-driven, **movement only, never opacity**, so text keeps full contrast mid-reveal). Every animation opts in under `prefers-reduced-motion: no-preference` (or Tailwind `motion-safe:`); with reduced motion content shows in its final state. **No global "duration: 0.01ms" override.** Scroll reveals and the stuck-header shadow are progressive enhancement (no fallback). |
+| Touch targets     | ≥ 44 × 44 px on mobile                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Icons             | Lucide, 16 px in text, 20 px in nav, stroke 1.75                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 ---
 
@@ -85,24 +90,26 @@ In dark mode, soft backgrounds are the solid color at 15% opacity on `--backgrou
 
 shadcn/ui gives us the primitives (Button, Input, Select, Dialog, Sheet, Popover, Calendar, Tabs, Table, Badge, Avatar, DropdownMenu, Command, Tooltip, Sonner toasts, Skeleton, Chart). On top of them we build these product components:
 
-| Component                   | Purpose                                                   | Key states / variants                                                                                                                                                                                   |
-| --------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClockCard**               | Main clock in/out surface                                 | `idle` (Clock in) · `running` (timer, ring, Clock out) · `pending` (spinner, disabled) · `done` · `on_leave` · `day_off` ("counts as overtime" hint) · `auto_closed` warning · `error` (inline + retry) |
-| **ProgressRing**            | Today's progress toward required hours                    | 0–100% fills **green**; past 100% a second lap fills **purple** (overtime). Center label: `6h 12m / 8h`                                                                                                 |
-| **ClockStatusChip**         | Compact running timer in the top bar on every page        | hidden when idle · green dot + `03:12:45` when running · click → dashboard                                                                                                                              |
-| **DurationText**            | Formats minutes; screen-reader label "7 hours 42 minutes" | default · `signed` (+25m / −40m)                                                                                                                                                                        |
-| **StatusBadge**             | Day status pill: dot + label                              | one variant per status token                                                                                                                                                                            |
-| **AttendanceCalendar**      | Month grid; each day shows status color + hours           | keyboard grid navigation (arrow keys), legend, today outline, selected day                                                                                                                              |
-| **StatCard**                | KPI tile: label, big tabular value, sub-line              | default · loading skeleton                                                                                                                                                                              |
-| **LiveBoard**               | Who's in right now, grouped                               | groups: Clocked in · Not in yet · On leave · Day off; each row: avatar, name, since 09:02, running duration                                                                                             |
-| **ReportTable**             | Monthly report (TanStack Table)                           | sticky member column, sortable numeric columns, totals footer, row → member month                                                                                                                       |
-| **SessionList**             | Today's / a day's sessions                                | each: in → out, duration, source icon, `auto_closed` tag, admin "Edit"                                                                                                                                  |
-| **LeaveRequestSheet**       | Apply for leave                                           | type select, date / range picker, half-day segmented control, reason, quota hint, overlap error                                                                                                         |
-| **ApprovalCard**            | Pending leave for admins                                  | summary, conflict hint (others off that day), Approve / Reject + note                                                                                                                                   |
-| **ScheduleEditor**          | Working-hours editor                                      | 7 rows: toggle, start, end, required hours; "Copy Monday to weekdays"; effective-from date                                                                                                              |
-| **InviteDialog**            | Invite by email                                           | multi-email input (paste a list), role select, pending invites list with Resend / Revoke                                                                                                                |
-| **OrgSwitcher**             | Switch org / create new                                   | Command-menu combobox                                                                                                                                                                                   |
-| **EmptyState / ErrorState** | Consistent empty and failure screens                      | icon, title, one sentence, primary action                                                                                                                                                               |
+| Component                   | Purpose                                                   | Key states / variants                                                                                                                                                                                                            |
+| --------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClockCard** ✅            | Main clock in/out surface                                 | `idle` (Clock in) · `running` (timer, ring, Clock out) · `pending` (spinner, disabled) · `done` · `on_leave` · `day_off` ("counts as overtime" hint) · `auto_closed` warning · `error` (inline + retry)                          |
+| **ProgressRing** ✅         | Today's progress toward required hours                    | Built (`components/shared/ProgressRing`): a native `<progress>` with `aria-valuetext`; 0–100% fills **green**, past 100% a second lap fills **purple** (overtime); `fillOnLoad`; `on-brand` variant. Center label: `6h 12m / 8h` |
+| **StatusBadge** ✅          | Day status pill: dot + label                              | Built (`components/shared/StatusBadge`): tones present · short · absent · leave · overtime · off                                                                                                                                 |
+| **TabSwitcher** ✅          | Small accessible tabs (WAI-ARIA tabs pattern)             | One tab stop, arrow keys / Home / End, server-rendered panels passed in; ~1 KB instead of Radix Tabs                                                                                                                             |
+| **LogoMark / Logo** ✅      | Brand mark and wordmark                                   | Mark scales via `className` (`size-7` default)                                                                                                                                                                                   |
+| **ClockStatusChip** ✅      | Compact running timer in the top bar on every page        | hidden when idle · green dot + `03:12:45` when running · click → dashboard                                                                                                                                                       |
+| **DurationText**            | Formats minutes; screen-reader label "7 hours 42 minutes" | default · `signed` (+25m / −40m)                                                                                                                                                                                                 |
+| **AttendanceCalendar** ✅   | Month grid; each day shows status color + hours           | keyboard grid navigation (arrow keys), legend, today outline, selected day                                                                                                                                                       |
+| **StatCard**                | KPI tile: label, big tabular value, sub-line              | default · loading skeleton                                                                                                                                                                                                       |
+| **LiveBoard**               | Who's in right now, grouped                               | groups: Clocked in · Not in yet · On leave · Day off; each row: avatar, name, since 09:02, running duration                                                                                                                      |
+| **ReportTable**             | Monthly report (TanStack Table)                           | sticky member column, sortable numeric columns, totals footer, row → member month                                                                                                                                                |
+| **SessionList** ✅          | Today's / a day's sessions                                | each: in → out, duration, source icon, `auto_closed` tag, admin "Edit"                                                                                                                                                           |
+| **LeaveRequestSheet**       | Apply for leave                                           | type select, date / range picker, half-day segmented control, reason, quota hint, overlap error                                                                                                                                  |
+| **ApprovalCard**            | Pending leave for admins                                  | summary, conflict hint (others off that day), Approve / Reject + note                                                                                                                                                            |
+| **ScheduleEditor**          | Working-hours editor                                      | 7 rows: toggle, start, end, required hours; "Copy Monday to weekdays"; effective-from date                                                                                                                                       |
+| **InviteDialog**            | Invite by email                                           | multi-email input (paste a list), role select, pending invites list with Resend / Revoke                                                                                                                                         |
+| **OrgSwitcher**             | Switch org / create new                                   | Command-menu combobox                                                                                                                                                                                                            |
+| **EmptyState / ErrorState** | Consistent empty and failure screens                      | icon, title, one sentence, primary action                                                                                                                                                                                        |
 
 Every data view has **loading** (skeleton matching the final layout, so nothing shifts), **empty**, **error** (with retry) and **success** states.
 
@@ -176,6 +183,47 @@ Primary journey for an owner: **Attendance** (morning check) → **Approvals** �
 └─────────────────────────────┘
 ```
 
+### As built (Phase 1)
+
+- `src/app/o/[orgSlug]/layout.tsx` + `src/features/app-shell`. The frame (sidebar column, top bar,
+  main) is static; the org switcher, nav, date and user menu stream in behind Suspense with
+  skeletons of the same size.
+- **Org switcher** sits at the top of the sidebar (desktop, as on the design canvas) and in the top
+  bar on phones. It's a dropdown menu listing your orgs with your role, plus **Create
+  organization**. A command-palette search can replace it once people belong to many orgs.
+- **User menu** (avatar, top bar right, every size): name and email, **Account**, **Sign out**.
+- **Page title** is the top bar's `<h1>` (visually hidden on phones), taken from the nav config.
+- **Nav config** (`src/features/app-shell/constants/navigation.ts`) lists only pages that exist.
+  Today that's Dashboard, so the Manage group is empty and hidden. It appears for owners and admins
+  once a Manage page ships.
+- **Bottom tabs** show the "Me" pages and render only when there are at least two (a bar with one
+  tab is noise). Since Phase 3 that's Home and Time; the Manage sheet comes with the first Manage
+  page.
+- The tablet rail keeps labels for screen readers (`sr-only`) and shows them as tooltips (`title`).
+
+### As built (Phase 3)
+
+- **Dashboard:** the Today card holds the greeting, the shift line ("Shift today 09:00 – 18:00 · 8h
+  required · late after 09:15"), the **ClockCard** and today's **SessionList**. The right column is
+  **This week** (a bar per day: required time green, or amber when short, overtime purple; +/− per
+  day; totals), then Working hours and the org card.
+- **ClockCard** (`src/features/time-tracking/components`): ring + "You're clocked in since 09:02" +
+  stopwatch (`text-display` from `sm`), "3h 51m to go" or "+25m overtime", one primary button
+  (Clock in / Clock out) and "Add note" while running. On a day off the ring becomes a "Day off"
+  disc with the overtime hint. Pending: spinner and "Clocking in…". Errors: inline alert with "Try
+  again". The auto-closed notice (amber, `TriangleAlert`) stays until the next clock-in.
+  `on_leave` arrives with leave (Phase 5).
+- **ClockStatusChip** sits between the date and the user menu: green dot + stopwatch, just the dot
+  on phones; its accessible name is "Clocked in since 09:02. Open the dashboard".
+- **Timesheet** (`/o/[orgSlug]/timesheet?month=YYYY-MM`): month name with previous/next (no next past
+  this month), four stat tiles (Worked of required, Overtime, Shortfall, Present with absent/late),
+  an auto-closed warning when there are any, the **AttendanceCalendar**, then every day so far,
+  newest first, with its sessions. Calendar cells link to those days (`#day-YYYY-MM-DD`).
+- **AttendanceCalendar** is a `<table role="grid">`: one tab stop (today), arrow keys, Home/End.
+  Each status has its own icon (✓ complete, ↗ overtime, ↘ short, ✕ absent, – day off, clock in
+  progress) and soft tone, and the cell's name says everything in words. Phones show the day and
+  icon; from `sm` the label ("Short · Late") and hours too. Days still to come are plain numbers.
+
 ---
 
 ## 6. Key screens
@@ -243,11 +291,19 @@ Sticky member column, sortable numeric columns, row → `/team/[member]` month c
 - **Member:** balances per leave type at the top, then a list of requests with StatusBadge (pending / approved / rejected / cancelled), and a **"Request leave"** button that opens the LeaveRequestSheet.
 - **Admin, Approvals:** a list of ApprovalCards showing who else is off on those dates. One-click approve; reject asks for an optional note.
 
-### 6.5 Onboarding (3 short steps)
+### 6.5 Onboarding
 
-1. **Organization**: name, URL slug (auto-filled), timezone (detected).
-2. **Working hours**: ScheduleEditor pre-filled with Mon–Fri 09:00–18:00, 8h.
-3. **Invite your team**: paste emails, choose a role. Can be skipped.
+Built as one page with two cards (Phase 1); the invite step arrives with invitations (Phase 2).
+
+1. **Your organization**: name, web address (slug suggested from the name until edited; phones
+   show `/o/` only before it), timezone (detected from the browser, editable, native select).
+2. **Working hours**: ScheduleEditor pre-filled with the confirmed defaults (Mon–Fri 09:00–18:00,
+   8h, 15 min grace). On phones each day shows Start and End side by side with hours below, so a
+   12-hour `06:00 PM` still fits; from 768 px each day is one row.
+3. _(Phase 2)_ **Invite your team**: paste emails, choose a role. Can be skipped.
+
+Errors appear under each field (`aria-invalid` + `aria-describedby`), focus moves to the first
+one, and server problems that aren't about a field show in an alert above the button.
 
 ---
 
@@ -258,7 +314,8 @@ Sticky member column, sortable numeric columns, row → `/team/[member]` month c
 - The live timer is **not** announced every second. State changes are announced once through `aria-live="polite"` (e.g. "Clocked in at 09:02").
 - The AttendanceCalendar uses the grid pattern (arrow keys, Home/End, Enter opens the day). Tables use `<th scope>` and a caption.
 - Dialogs and sheets trap focus and close with Escape (Radix). Forms have real labels, inline errors linked with `aria-describedby`, and specific messages ("End date can't be before start date").
-- Motion is reduced under `prefers-reduced-motion`. Dark mode follows the OS, with a manual toggle.
+- Motion respects `prefers-reduced-motion` per animation (see §2.4). Dark mode follows the OS, with a manual toggle.
+- Automated accessibility checks (axe in Playwright) audit the **settled** page by emulating reduced motion, so fades can't skew contrast; a separate test proves animations run by default and none run under reduced motion.
 
 ## 8. Voice and copy
 

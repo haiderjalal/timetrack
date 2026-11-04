@@ -4,8 +4,10 @@ Attendance and time tracking for teams. Members sign in with Google and clock in
 TimeTrack records the hours worked against the organization's working hours, counts overtime, and
 handles leave requests. Owners get a monthly report for every member.
 
-> **Status:** Phase 0 (foundation) of the [roadmap](docs/roadmap.md). Sign-in and the app itself
-> arrive in Phase 1.
+> **Status:** Phases 1 and 3 of the [roadmap](docs/roadmap.md): Google sign-in, onboarding
+> (create an organization with its working hours), the app shell, clocking in and out from the
+> dashboard, automatic closing of forgotten sessions, and a personal Timesheet with a month
+> calendar. Invitations (Phase 2), admin reports (Phase 4) and leave (Phase 5) come next.
 
 ## Tech stack
 
@@ -43,6 +45,28 @@ Open http://localhost:3000.
 4. In Google Cloud, the OAuth client's redirect URI is
    `https://<project-ref>.supabase.co/auth/v1/callback`.
 
+### Apply the database
+
+The schema lives in `supabase/migrations` (design: [docs/database.md](docs/database.md)). The
+project ref is the subdomain of `NEXT_PUBLIC_SUPABASE_URL`. `link` asks for the database password:
+type it in your terminal only.
+
+```bash
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+npx supabase gen types typescript --linked > src/types/database.types.ts
+```
+
+No CLI? Paste the migrations, in file-name order, into **SQL Editor → New query** as one script
+wrapped in `begin; … commit;`. Add an insert of each migration's version into
+`supabase_migrations.schema_migrations`, so that a later `supabase db push` skips them. The auto-close
+job needs `pg_cron`, which the migration enables; if Supabase refuses, turn it on once in
+**Database → Extensions**.
+
+Row Level Security is covered by pgTAP tests in `supabase/tests/database`. Run them against the
+local database with `npm run db:start` then `npx supabase test db` (Docker required).
+
 ## Scripts
 
 | Script                                    | What it does                                        |
@@ -63,7 +87,7 @@ First-time e2e setup: `npx playwright install chromium`.
 ```
 docs/          architecture, database, business rules, design system, roadmap
 e2e/           Playwright specs
-supabase/      config, migrations and pgTAP tests (from Phase 1)
+supabase/      config, migrations and pgTAP tests (supabase/tests/database)
 src/
   app/         routes only (pages, layouts, route handlers)
   features/    feature modules: components, services, repositories, validation

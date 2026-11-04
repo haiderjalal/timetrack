@@ -7,6 +7,10 @@ import {
   AccountCard,
   AccountCardSkeleton,
 } from "@/features/auth/components/AccountCard";
+import {
+  YourOrganizations,
+  YourOrganizationsSkeleton,
+} from "@/features/organizations/components/YourOrganizations";
 
 import type { Metadata } from "next";
 
@@ -35,6 +39,9 @@ export default function AccountPage() {
         {/* The page shell is static; the user (from the session) streams in. */}
         <Suspense fallback={<AccountCardSkeleton />}>
           <AccountCard />
+        </Suspense>
+        <Suspense fallback={<YourOrganizationsSkeleton />}>
+          <YourOrganizations />
         </Suspense>
       </main>
     </div>
