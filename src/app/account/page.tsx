@@ -7,6 +7,7 @@ import {
   AccountCard,
   AccountCardSkeleton,
 } from "@/features/auth/components/AccountCard";
+import { MyInvitations } from "@/features/invitations/components/MyInvitations";
 import {
   YourOrganizations,
   YourOrganizationsSkeleton,
@@ -39,6 +40,9 @@ export default function AccountPage() {
         {/* The page shell is static; the user (from the session) streams in. */}
         <Suspense fallback={<AccountCardSkeleton />}>
           <AccountCard />
+        </Suspense>
+        <Suspense fallback={null}>
+          <MyInvitations />
         </Suspense>
         <Suspense fallback={<YourOrganizationsSkeleton />}>
           <YourOrganizations />

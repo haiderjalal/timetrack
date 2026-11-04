@@ -456,6 +456,20 @@ export type Database = {
           week_starts_on: number;
         };
       };
+      accept_my_invitation: {
+        Args: { p_invitation_id: string };
+        Returns: {
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          id: string;
+          name: string;
+          slug: string;
+          timezone: string;
+          updated_at: string;
+          week_starts_on: number;
+        };
+      };
       change_member_role: {
         Args: {
           p_org_id: string;
@@ -570,6 +584,17 @@ export type Database = {
           updated_at: string;
           user_id: string;
         };
+      };
+      list_my_invitations: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          expires_at: string;
+          invitation_id: string;
+          invited_role: Database["public"]["Enums"]["member_role"];
+          organization_name: string;
+          organization_slug: string;
+          organization_timezone: string;
+        }[];
       };
       preview_invitation: {
         Args: { p_token: string };

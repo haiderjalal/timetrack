@@ -14,6 +14,19 @@ export interface PendingInvitation extends OpenInvitation {
   isExpired: boolean;
 }
 
+/**
+ * An open invitation addressed to the signed-in person. Its id joins it; the token
+ * never reaches the page.
+ */
+export interface MyInvitation {
+  id: string;
+  organizationName: string;
+  organizationSlug: string;
+  organizationTimeZone: string;
+  role: InvitableRole;
+  expiresAt: string;
+}
+
 export const INVITATION_PREVIEW_STATES = [
   "ready",
   "wrong_account",

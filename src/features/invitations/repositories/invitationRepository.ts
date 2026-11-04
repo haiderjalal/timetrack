@@ -13,6 +13,7 @@ import type { InvitationFailure } from "../utils/invitationErrors";
 import type {
   InvitationPreview,
   InvitationPreviewState,
+  MyInvitation,
   OpenInvitation,
 } from "../types/invitation";
 
@@ -141,6 +142,56 @@ export async function acceptInvitationRecord(
     return {
       ok: false,
       failure: toRpcFailure("invitations.accept", error, INVITATION_FAILURES),
+    };
+  }
+
+  return { ok: true, organizationSlug: data.slug };
+}
+
+/**
+ * Open invitations for the signed-in email. list_my_invitations() checks the
+ * address and returns no token.
+ */
+export async function listMyOpenInvitations(
+  supabase: TypedSupabaseClient,
+): Promise<MyInvitation[]> {
+  const { data, error } = await supabase.rpc("list_my_invitations");
+
+  if (error) failDataAccess("invitations.list_mine", error);
+
+  return data.flatMap((row) =>
+    isInvitableRole(row.invited_role)
+      ? [
+          {
+            id: row.invitation_id,
+            organizationName: row.organization_name,
+            organizationSlug: row.organization_slug,
+            organizationTimeZone: row.organization_timezone,
+            role: row.invited_role,
+            expiresAt: row.expires_at,
+          },
+        ]
+      : [],
+  );
+}
+
+/** accept_my_invitation() joins the signed-in person when their email is the invited address. */
+export async function acceptMyInvitationRecord(
+  supabase: TypedSupabaseClient,
+  invitationId: string,
+): Promise<AcceptInvitationResult> {
+  const { data, error } = await supabase.rpc("accept_my_invitation", {
+    p_invitation_id: invitationId,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      failure: toRpcFailure(
+        "invitations.accept_mine",
+        error,
+        INVITATION_FAILURES,
+      ),
     };
   }
 
