@@ -6,6 +6,7 @@ export interface ZonedNow {
   weekday: number;
   hour: number;
   minute: number;
+  second: number;
 }
 
 const WEEKDAY_INDEX: Record<string, number> = {
@@ -19,7 +20,7 @@ const WEEKDAY_INDEX: Record<string, number> = {
 };
 
 /**
- * What the clock says right now for an org. Dates and schedules always use the
+ * What the clock says at an instant (default: now) for an org. Dates and schedules always use the
  * org timezone, never the server's or the device's (business-rules.md §2).
  */
 export function getZonedNow(
@@ -34,6 +35,7 @@ export function getZonedNow(
     weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hourCycle: "h23",
   }).formatToParts(now);
 
@@ -45,6 +47,7 @@ export function getZonedNow(
     weekday: WEEKDAY_INDEX[part("weekday")] ?? 0,
     hour: Number(part("hour")),
     minute: Number(part("minute")),
+    second: Number(part("second")),
   };
 }
 
