@@ -219,7 +219,6 @@ export function ClockCard({
             disabled={isPending}
             className={buttonVariants({
               size: "lg",
-              variant: running ? "outline" : "default",
               className: "w-full sm:w-48",
             })}
           >

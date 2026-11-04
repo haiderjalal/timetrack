@@ -123,21 +123,28 @@ function DayCell({ cell, position, isTabStop }: DayCellProps) {
       data-calendar-day=""
       data-position={position}
       tabIndex={isTabStop ? 0 : -1}
-      aria-label={cell.description}
       aria-current={cell.isToday ? "date" : undefined}
       className={`${base} ${tone}${today} outline-none hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring dark:hover:brightness-110`}
     >
-      <span className="flex items-center justify-between gap-1">
+      {/* The name says it all in words; the visible parts are a summary of it. */}
+      <span className="sr-only">{cell.description}</span>
+      <span
+        aria-hidden="true"
+        className="flex items-center justify-between gap-1"
+      >
         <span className="font-semibold tabular">{cell.dayOfMonth}</span>
-        <Icon className="size-3.5 shrink-0" aria-hidden="true" />
+        <Icon className="size-3.5 shrink-0" />
       </span>
-      <span className="flex flex-col leading-tight max-sm:hidden">
+      <span
+        aria-hidden="true"
+        className="flex flex-col leading-tight max-sm:hidden"
+      >
         <span className="truncate font-medium">
           {cell.badge?.label}
           {cell.isLate ? " · Late" : ""}
         </span>
         {cell.workedText ? (
-          <span className="tabular opacity-80">{cell.workedText}</span>
+          <span className="tabular">{cell.workedText}</span>
         ) : null}
       </span>
     </a>
