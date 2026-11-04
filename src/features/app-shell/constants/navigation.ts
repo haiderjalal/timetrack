@@ -1,11 +1,15 @@
-import { CalendarDays, LayoutDashboard } from "lucide-react";
+import { CalendarDays, LayoutDashboard, Users } from "lucide-react";
 
-import { orgDashboardPath, orgTimesheetPath } from "@/constants/routes";
+import {
+  orgDashboardPath,
+  orgTeamPath,
+  orgTimesheetPath,
+} from "@/constants/routes";
 
 import type { LucideIcon } from "lucide-react";
 import type { Route } from "next";
 
-export type NavItemId = "dashboard" | "timesheet";
+export type NavItemId = "dashboard" | "timesheet" | "team";
 
 export interface NavItem {
   label: string;
@@ -40,11 +44,18 @@ export const NAV_ITEMS: Record<NavItemId, NavItem> = {
     href: (orgSlug) => orgTimesheetPath(orgSlug),
     icon: CalendarDays,
   },
+  team: {
+    label: "Team",
+    tabLabel: "Team",
+    segment: "team",
+    href: orgTeamPath,
+    icon: Users,
+  },
 };
 
 // Only pages that exist are linked (docs/design-system.md §4). Leave joins
-// "Me", and Attendance, Team, Approvals, Reports and Settings join "Manage",
-// in the roadmap phase that builds each page.
+// "Me", and Approvals, Reports and Settings join "Manage", in the roadmap
+// phase that builds each page.
 export const NAV_GROUPS: readonly NavGroup[] = [
   {
     id: "me",
@@ -52,7 +63,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: ["dashboard", "timesheet"],
     managersOnly: false,
   },
-  { id: "manage", label: "Manage", items: [], managersOnly: true },
+  { id: "manage", label: "Manage", items: ["team"], managersOnly: true },
 ];
 
 export function getNavItemBySegment(segment: string | null): NavItem | null {

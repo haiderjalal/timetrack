@@ -63,6 +63,70 @@ export type Database = {
           },
         ];
       };
+      invitations: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string;
+          org_id: string;
+          revoked_at: string | null;
+          role: Database["public"]["Enums"]["member_role"];
+          token_hash: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email: string;
+          expires_at?: string;
+          id?: string;
+          invited_by: string;
+          org_id: string;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["member_role"];
+          token_hash: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string;
+          org_id?: string;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["member_role"];
+          token_hash?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invitations_accepted_by_fkey";
+            columns: ["accepted_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invitations_invited_by_fkey";
+            columns: ["invited_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invitations_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       leave_types: {
         Row: {
           color_token: string;
@@ -378,6 +442,39 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_invitation: {
+        Args: { p_token: string };
+        Returns: {
+          created_at: string;
+          created_by: string;
+          deleted_at: string | null;
+          id: string;
+          name: string;
+          slug: string;
+          timezone: string;
+          updated_at: string;
+          week_starts_on: number;
+        };
+      };
+      change_member_role: {
+        Args: {
+          p_org_id: string;
+          p_role: Database["public"]["Enums"]["member_role"];
+          p_user_id: string;
+        };
+        Returns: {
+          created_at: string;
+          id: string;
+          job_title: string | null;
+          joined_at: string;
+          org_id: string;
+          role: Database["public"]["Enums"]["member_role"];
+          schedule_id: string | null;
+          status: Database["public"]["Enums"]["member_status"];
+          updated_at: string;
+          user_id: string;
+        };
+      };
       clock_in: {
         Args: {
           p_org_id: string;
@@ -417,6 +514,27 @@ export type Database = {
           updated_at: string;
           user_id: string;
           work_date: string;
+        };
+      };
+      create_invitation: {
+        Args: {
+          p_email: string;
+          p_org_id: string;
+          p_role: Database["public"]["Enums"]["member_role"];
+          p_token_hash: string;
+        };
+        Returns: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string;
+          org_id: string;
+          revoked_at: string | null;
+          role: Database["public"]["Enums"]["member_role"];
+          token_hash: string;
         };
       };
       create_organization: {
