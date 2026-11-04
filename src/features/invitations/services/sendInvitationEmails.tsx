@@ -18,19 +18,19 @@ export interface SendInvitationEmailsParams {
 }
 
 /**
- * One email per new invitation. The invite action runs this after its response,
- * so a slow mail provider never holds up the admin's screen.
+ * Emails each new invitation and returns the addresses that didn't go out. The
+ * invite action waits for this, so the admin is told the real outcome.
  */
 export async function sendInvitationEmails({
   invitations,
   role,
   organizationName,
-}: SendInvitationEmailsParams): Promise<void> {
+}: SendInvitationEmailsParams): Promise<string[]> {
   const roleLabel = ROLE_LABELS[role];
 
-  await Promise.all(
-    invitations.map(({ email, token }) =>
-      sendEmail({
+  const results = await Promise.all(
+    invitations.map(async ({ email, token }) => {
+      const result = await sendEmail({
         to: email,
         subject: `You're invited to ${organizationName} on TimeTrack`,
         react: (
@@ -41,7 +41,10 @@ export async function sendInvitationEmails({
             validDays={INVITATION_VALID_DAYS}
           />
         ),
-      }),
-    ),
+      });
+      return { email, ok: result.ok };
+    }),
   );
+
+  return results.filter((result) => !result.ok).map((result) => result.email);
 }

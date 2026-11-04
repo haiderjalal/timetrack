@@ -1,6 +1,9 @@
 import type { InviteMembersSummary } from "../types/invitation";
 
-/** One line for the dialog, e.g. "Sent 2 invitations. 1 is already on the team." */
+/**
+ * One line for the team page, e.g. "Sent 2 invitations. 1 is already on the team."
+ * `failed` holds addresses that couldn't be invited or emailed.
+ */
 export function describeInviteSummary({
   invited,
   alreadyMembers,
@@ -17,7 +20,7 @@ export function describeInviteSummary({
   }
   if (failed.length > 0) {
     parts.push(
-      `${countOf(failed.length, "address")} couldn't be invited. Try again.`,
+      `${countOf(failed.length, "address")} couldn't be sent. Press Resend on the pending list to try again.`,
     );
   }
 

@@ -39,14 +39,28 @@ describe("describeInviteSummary", () => {
     ).toBe("2 are already on the team.");
   });
 
-  it("says which addresses failed", () => {
+  it("says which addresses couldn't be sent, and what to do", () => {
     expect(
       describeInviteSummary({
         invited: none,
         alreadyMembers: none,
         failed: ["a@x.com"],
       }),
-    ).toBe("1 address couldn't be invited. Try again.");
+    ).toBe(
+      "1 address couldn't be sent. Press Resend on the pending list to try again.",
+    );
+  });
+
+  it("reports a partial send in one line", () => {
+    expect(
+      describeInviteSummary({
+        invited: ["a@x.com"],
+        alreadyMembers: none,
+        failed: ["b@x.com"],
+      }),
+    ).toBe(
+      "Sent 1 invitation. 1 address couldn't be sent. Press Resend on the pending list to try again.",
+    );
   });
 
   it("says so when there was nothing to send", () => {

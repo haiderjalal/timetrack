@@ -4,6 +4,8 @@ import { Resend } from "resend";
 
 import { logger } from "@/lib/logger";
 
+import { getEmailSettings } from "./emailSettings";
+
 import type { ReactElement } from "react";
 
 const SEND_TIMEOUT_MS = 10_000;
@@ -21,41 +23,46 @@ export interface SendEmailInput {
   react: ReactElement;
 }
 
+export type SendEmailResult = { ok: true } | { ok: false; reason: string };
+
 /**
- * Sends one transactional email through Resend. It never throws: a failure is
- * logged by reason only (never the address) and reported as false, so the
- * invitation behind it stays valid and an admin can send it again.
+ * Sends one transactional email through Resend. It never throws. A failure comes
+ * back as a short reason, never the address, so the caller can tell the admin
+ * what went wrong. The invitation stays valid, so it can be sent again.
  */
 export async function sendEmail({
   to,
   subject,
   react,
-}: SendEmailInput): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+}: SendEmailInput): Promise<SendEmailResult> {
+  const settings = getEmailSettings(process.env);
 
-  if (!apiKey || !from) {
+  if (!settings) {
     logger.error("email.not_configured");
-    return false;
+    return { ok: false, reason: "not_configured" };
   }
 
   try {
     const { error } = await withTimeout(
-      new Resend(apiKey).emails.send({ from, to, subject, react }),
+      new Resend(settings.apiKey).emails.send({
+        from: settings.from,
+        to,
+        subject,
+        react,
+      }),
       SEND_TIMEOUT_MS,
     );
 
     if (error) {
       logger.error("email.send_failed", { reason: error.name });
-      return false;
+      return { ok: false, reason: error.name };
     }
 
-    return true;
+    return { ok: true };
   } catch (error) {
-    logger.error("email.send_failed", {
-      reason: error instanceof Error ? error.name : "unknown",
-    });
-    return false;
+    const reason = error instanceof Error ? error.name : "unknown";
+    logger.error("email.send_failed", { reason });
+    return { ok: false, reason };
   }
 }
 
